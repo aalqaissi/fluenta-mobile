@@ -52,6 +52,37 @@ extension QuestionTypeLabel on QuestionType {
       };
 }
 
+/// Parse the backend's kebab-case type string (e.g. "true-false-notgiven").
+QuestionType questionTypeFromKey(String? key) {
+  switch (key) {
+    case 'true-false-notgiven':
+      return QuestionType.trueFalseNotGiven;
+    case 'yes-no-notgiven':
+      return QuestionType.yesNoNotGiven;
+    case 'multiple-choice':
+    case 'multi-select':
+      return QuestionType.multipleChoice;
+    case 'matching-information':
+      return QuestionType.matchingInformation;
+    case 'matching-headings':
+      return QuestionType.matchingHeadings;
+    case 'matching-features':
+      return QuestionType.matchingFeatures;
+    case 'matching-sentence-endings':
+      return QuestionType.matchingSentenceEndings;
+    case 'sentence-completion':
+      return QuestionType.sentenceCompletion;
+    case 'summary-completion':
+      return QuestionType.summaryCompletion;
+    case 'diagram-label':
+      return QuestionType.diagramLabel;
+    case 'short-answer':
+      return QuestionType.shortAnswer;
+    default:
+      return QuestionType.sentenceCompletion;
+  }
+}
+
 class Streak {
   final int current;
   final int best;
@@ -324,6 +355,100 @@ class Overview {
           .toList(),
     );
   }
+}
+
+// ---- Exams & attempts (mirror backend ExamDto / AttemptDto) ----
+class ExamDto {
+  final String id;
+  final String skill;
+  final String title;
+  final String module;
+  final String status;
+  final String scope;
+  final int timeLimit;
+  final String format; // "studio" | "runner"
+  final Map<String, dynamic> content;
+  const ExamDto({
+    required this.id,
+    required this.skill,
+    required this.title,
+    required this.module,
+    required this.status,
+    required this.scope,
+    required this.timeLimit,
+    required this.format,
+    required this.content,
+  });
+  factory ExamDto.fromJson(Map<String, dynamic> j) => ExamDto(
+        id: j['id'] as String,
+        skill: (j['skill'] as String?) ?? '',
+        title: (j['title'] as String?) ?? '',
+        module: (j['module'] as String?) ?? 'both',
+        status: (j['status'] as String?) ?? 'published',
+        scope: (j['scope'] as String?) ?? 'global',
+        timeLimit: (j['timeLimit'] as num?)?.toInt() ?? 0,
+        format: (j['format'] as String?) ?? 'runner',
+        content: j['content'] is Map
+            ? Map<String, dynamic>.from(j['content'] as Map)
+            : <String, dynamic>{},
+      );
+}
+
+class AttemptRequest {
+  final String examId;
+  final String skill;
+  final Map<String, String> answers;
+  final int durationUsedSec;
+  const AttemptRequest({
+    required this.examId,
+    required this.skill,
+    required this.answers,
+    required this.durationUsedSec,
+  });
+  Map<String, dynamic> toJson() => {
+        'examId': examId,
+        'skill': skill,
+        'answers': answers,
+        'durationUsedSec': durationUsedSec,
+      };
+}
+
+class AttemptDto {
+  final String id;
+  final String examId;
+  final String examTitle;
+  final String skill;
+  final Map<String, String> answers;
+  final int correct;
+  final int total;
+  final double band;
+  final int durationUsedSec;
+  final String createdAt;
+  const AttemptDto({
+    required this.id,
+    required this.examId,
+    required this.examTitle,
+    required this.skill,
+    required this.answers,
+    required this.correct,
+    required this.total,
+    required this.band,
+    required this.durationUsedSec,
+    required this.createdAt,
+  });
+  factory AttemptDto.fromJson(Map<String, dynamic> j) => AttemptDto(
+        id: (j['id'] as String?) ?? '',
+        examId: (j['examId'] as String?) ?? '',
+        examTitle: (j['examTitle'] as String?) ?? '',
+        skill: (j['skill'] as String?) ?? '',
+        answers: ((j['answers'] as Map?) ?? {})
+            .map((k, v) => MapEntry(k as String, '${v ?? ''}')),
+        correct: (j['correct'] as num?)?.toInt() ?? 0,
+        total: (j['total'] as num?)?.toInt() ?? 0,
+        band: (j['band'] as num?)?.toDouble() ?? 0,
+        durationUsedSec: (j['durationUsedSec'] as num?)?.toInt() ?? 0,
+        createdAt: (j['createdAt'] as String?) ?? '',
+      );
 }
 
 class QuestionOption {

@@ -76,4 +76,28 @@ class ApiClient {
 
   Future<Overview> getOverview() => _request('GET', '/overview',
       decode: (json) => Overview.fromJson(json as Map<String, dynamic>));
+
+  Future<List<ExamDto>> listExams({String? skill, String? status, String? scope}) {
+    final q = <String, String>{};
+    if (skill != null) q['skill'] = skill;
+    if (status != null) q['status'] = status;
+    if (scope != null) q['scope'] = scope;
+    final qs = q.isEmpty
+        ? ''
+        : '?${q.entries.map((e) => '${e.key}=${Uri.encodeComponent(e.value)}').join('&')}';
+    return _request('GET', '/exams$qs',
+        decode: (json) => (json as List)
+            .map((e) => ExamDto.fromJson(Map<String, dynamic>.from(e as Map)))
+            .toList());
+  }
+
+  Future<ExamDto> getExam(String id) => _request('GET', '/exams/$id',
+      decode: (json) => ExamDto.fromJson(json as Map<String, dynamic>));
+
+  Future<AttemptDto> submitAttempt(AttemptRequest req) => _request('POST', '/attempts',
+      body: req.toJson(),
+      decode: (json) => AttemptDto.fromJson(json as Map<String, dynamic>));
+
+  Future<AttemptDto> getAttempt(String id) => _request('GET', '/attempts/$id',
+      decode: (json) => AttemptDto.fromJson(json as Map<String, dynamic>));
 }

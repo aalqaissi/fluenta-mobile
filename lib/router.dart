@@ -11,7 +11,7 @@ import 'features/practice/practice_hub_screen.dart';
 import 'features/coach/coach_screen.dart';
 import 'features/more/more_screen.dart';
 import 'features/reading/reading_hub_screen.dart';
-import 'features/reading/reading_runner_screen.dart';
+import 'features/reading/reading_loader_screen.dart';
 import 'features/reading/reading_results_screen.dart';
 import 'features/writing/writing_hub_screen.dart';
 import 'features/writing/writing_editor_screen.dart';
@@ -83,7 +83,9 @@ GoRouter buildRouter(AuthState auth) {
       GoRoute(path: '/checkout', builder: (c, s) => const CheckoutScreen()),
       GoRoute(path: '/settings', builder: (c, s) => const SettingsScreen()),
       GoRoute(path: '/help', builder: (c, s) => const HelpScreen()),
-      GoRoute(path: '/exam/reading', builder: (c, s) => const ReadingRunnerScreen()),
+      GoRoute(
+          path: '/exam/reading',
+          builder: (c, s) => ReadingLoaderScreen(examId: s.uri.queryParameters['id'])),
       GoRoute(path: '/results/reading', builder: (c, s) => const ReadingResultsScreen()),
       GoRoute(path: '/exam/writing/:id', builder: (c, s) => WritingEditorScreen(taskId: s.pathParameters['id']!)),
       GoRoute(path: '/results/writing/:id', builder: (c, s) => const WritingResultsScreen()),

@@ -1,4 +1,5 @@
 import '../mock/passages.dart';
+import '../models/models.dart';
 
 /// A submitted reading attempt, carried from the runner to the results screen.
 class ReadingAttempt {
@@ -40,6 +41,7 @@ const List<GradingStep> gradingSteps = [
 /// Simple in-memory store carrying the last attempts between screens.
 class AttemptStore {
   static ReadingAttempt? lastReading;
+  static ReadingExam? lastReadingExam; // the exam actually taken (for review)
   static WritingAttempt? lastWriting;
 }
 

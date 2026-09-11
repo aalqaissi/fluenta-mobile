@@ -14,11 +14,11 @@ class ReadingResultsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final attempt = AttemptStore.lastReading;
-    final exam = readingExam;
+    final exam = AttemptStore.lastReadingExam ?? readingExam;
 
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(icon: const Icon(Icons.arrow_back_rounded), onPressed: () => context.go('/progress')),
+        leading: IconButton(icon: const Icon(Icons.arrow_back_rounded), onPressed: () => context.go('/')),
         title: const Text('Reading results'),
       ),
       body: attempt == null
@@ -47,7 +47,7 @@ class ReadingResultsScreen extends StatelessWidget {
                       const SizedBox(width: 16),
                       Expanded(
                         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                          const PillBadge('Graded by AI', color: AppColors.success, icon: Icons.auto_awesome),
+                          const PillBadge('Scored', color: AppColors.success, icon: Icons.checklist_rounded),
                           const SizedBox(height: 6),
                           const Text('Nice work!', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800)),
                           Text('You answered ${attempt.correct}/${attempt.total} correctly in ${pad2(attempt.durationUsedSec ~/ 60)}:${pad2(attempt.durationUsedSec % 60)}.',
@@ -59,7 +59,7 @@ class ReadingResultsScreen extends StatelessWidget {
                     Row(children: [
                       Expanded(
                         child: OutlinedButton.icon(
-                          onPressed: () => context.go('/exam/reading'),
+                          onPressed: () => context.go('/reading'),
                           icon: const Icon(Icons.refresh_rounded, size: 18),
                           label: const Text('Retake'),
                         ),

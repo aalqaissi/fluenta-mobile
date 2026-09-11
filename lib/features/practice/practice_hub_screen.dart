@@ -5,19 +5,27 @@ import '../../state/app_state.dart';
 import '../../theme/app_colors.dart';
 import '../../widgets/ui.dart';
 
+class _Item {
+  final String key, title, sub, route;
+  final String? lockKey;
+  final bool soon;
+  const _Item(this.key, this.title, this.sub, this.route, this.lockKey, {this.soon = false});
+}
+
 class PracticeHubScreen extends StatelessWidget {
   const PracticeHubScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     final app = context.watch<AppState>();
-    final items = [
-      ('reading', 'Reading', '3 passages · all 11 question types', '/reading', null),
-      ('writing', 'Writing', 'Task 1 & 2 with AI feedback', '/writing', null),
-      ('listening', 'Listening', '4 sections, played once', '/listening', 'listening'),
-      ('speaking', 'Speaking', '3 parts with pronunciation feedback', '/speaking', 'speaking'),
-      ('general', 'Full IELTS exam', 'All four sections, timed', '/full-exam', 'full-exam'),
-      ('reading', 'Mock exams', 'Take or upload your own', '/mock-exams', null),
+    const items = [
+      _Item('reading', 'Reading', '3 passages · all 11 question types', '/reading', null),
+      _Item('writing', 'Writing', 'Task 1 & 2', '/writing', null),
+      _Item('listening', 'Listening', '4 sections, played once', '/listening', 'listening'),
+      _Item('speaking', 'Speaking', '3 parts + Live Interview', '/speaking', 'speaking'),
+      _Item('vocabulary', 'Vocabulary', 'Build your word bank', '', null, soon: true),
+      _Item('grammar', 'Grammar', 'Targeted grammar drills', '', null, soon: true),
+      _Item('general', 'Full IELTS exam', 'All four sections, timed', '/full-exam', 'full-exam'),
     ];
     return Scaffold(
       appBar: AppBar(title: const Text('Practice')),
@@ -27,12 +35,19 @@ class PracticeHubScreen extends StatelessWidget {
           const Text('Choose a skill to practice', style: TextStyle(color: AppColors.mutedForeground)),
           const SizedBox(height: 12),
           ...items.map((it) {
-            final vis = skillVisual(it.$1);
-            final locked = it.$5 != null && app.isLocked(it.$5!);
+            final vis = skillVisual(it.key);
+            final locked = it.lockKey != null && app.isLocked(it.lockKey!);
             return Padding(
               padding: const EdgeInsets.only(bottom: 12),
               child: FluentaCard(
-                onTap: () => context.push(it.$4),
+                onTap: () {
+                  if (it.soon) {
+                    showToast(context, '${it.title} practice is coming soon',
+                        description: 'Tracked on your dashboard for now.');
+                  } else {
+                    context.push(it.route);
+                  }
+                },
                 child: Row(children: [
                   Container(
                     width: 48, height: 48,
@@ -43,14 +58,15 @@ class PracticeHubScreen extends StatelessWidget {
                   Expanded(
                     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                       Row(children: [
-                        Text(it.$2, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15.5)),
+                        Flexible(child: Text(it.title, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15.5))),
+                        if (it.soon) ...[const SizedBox(width: 8), const PillBadge('Soon', color: AppColors.mutedForeground)],
                         if (locked) ...[const SizedBox(width: 8), const LockPill()],
                       ]),
                       const SizedBox(height: 2),
-                      Text(it.$3, style: const TextStyle(color: AppColors.mutedForeground, fontSize: 12.5)),
+                      Text(it.sub, style: const TextStyle(color: AppColors.mutedForeground, fontSize: 12.5)),
                     ]),
                   ),
-                  const Icon(Icons.chevron_right_rounded, color: AppColors.mutedForeground),
+                  Icon(it.soon ? Icons.lock_clock_outlined : Icons.chevron_right_rounded, color: AppColors.mutedForeground),
                 ]),
               ),
             );

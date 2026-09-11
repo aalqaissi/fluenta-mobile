@@ -2,9 +2,11 @@ import 'dart:async';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../../mock/passages.dart';
+import 'package:provider/provider.dart';
 import '../../models/models.dart';
+import '../../services/api_client.dart';
 import '../../services/mock_api.dart';
+import '../../state/auth_state.dart';
 import '../../theme/app_colors.dart';
 import '../../utils/format.dart';
 import '../../widgets/grading_overlay.dart';
@@ -26,26 +28,35 @@ const _highlightSwatch = {
 };
 
 class ReadingRunnerScreen extends StatefulWidget {
-  const ReadingRunnerScreen({super.key});
+  final ReadingExam exam;
+  final String examId;
+  const ReadingRunnerScreen({super.key, required this.exam, required this.examId});
   @override
   State<ReadingRunnerScreen> createState() => _ReadingRunnerScreenState();
 }
 
 class _ReadingRunnerScreenState extends State<ReadingRunnerScreen> {
-  final exam = readingExam;
+  ReadingExam get exam => widget.exam;
   int _pIdx = 0;
   int _tab = 0; // 0 = passage, 1 = questions
   final Map<String, String> _answers = {};
   final Map<String, String> _highlights = {};
   String? _activeColor;
   String _find = '';
-  late int _timeLeft = exam.durationSec;
+  late int _timeLeft;
+  bool _submitting = false;
   Timer? _timer;
   final List<TapGestureRecognizer> _recognizers = [];
 
   @override
   void initState() {
     super.initState();
+    _timeLeft = exam.durationSec;
+    _startTimer();
+  }
+
+  void _startTimer() {
+    _timer?.cancel();
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (!mounted) return;
       if (_timeLeft <= 0) {
@@ -69,11 +80,36 @@ class _ReadingRunnerScreenState extends State<ReadingRunnerScreen> {
   int get _answered => _answers.values.where((v) => v.trim().isNotEmpty).length;
 
   Future<void> _submit() async {
+    if (_submitting) return;
+    setState(() => _submitting = true);
     _timer?.cancel();
-    final attempt = scoreReading(_answers, exam.durationSec - _timeLeft);
-    AttemptStore.lastReading = attempt;
-    await showGradingDialog(context);
-    if (mounted) context.go('/results/reading');
+    final used = exam.durationSec - _timeLeft;
+    final api = context.read<AuthState>().api;
+    try {
+      final dto = await api.submitAttempt(AttemptRequest(
+        examId: widget.examId,
+        skill: 'reading',
+        answers: _answers,
+        durationUsedSec: used,
+      ));
+      AttemptStore.lastReading = ReadingAttempt(
+        answers: _answers,
+        correct: dto.correct,
+        total: dto.total,
+        band: dto.band,
+        durationUsedSec: dto.durationUsedSec,
+      );
+      AttemptStore.lastReadingExam = exam;
+      if (!mounted) return;
+      await showGradingDialog(context);
+      if (mounted) context.go('/results/reading');
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() => _submitting = false);
+      _startTimer();
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Could not submit: ${e.message}')));
+    }
   }
 
   @override
@@ -278,8 +314,10 @@ class _ReadingRunnerScreenState extends State<ReadingRunnerScreen> {
           if (isLast)
             FilledButton.icon(
               style: FilledButton.styleFrom(backgroundColor: AppColors.success, minimumSize: const Size(0, 46)),
-              onPressed: _submit,
-              icon: const Icon(Icons.flag_rounded, size: 18),
+              onPressed: _submitting ? null : _submit,
+              icon: _submitting
+                  ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                  : const Icon(Icons.flag_rounded, size: 18),
               label: const Text('Submit'),
             )
           else
