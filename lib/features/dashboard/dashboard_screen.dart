@@ -28,7 +28,7 @@ class DashboardScreen extends StatelessWidget {
             width: 30, height: 30,
             decoration: BoxDecoration(gradient: AppColors.warmGradient, borderRadius: BorderRadius.circular(9)),
             alignment: Alignment.center,
-            child: const Text('F', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
+            child: const Text(Brand.logoInitial, style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
           ),
           const SizedBox(width: 8),
           const Text(Brand.name),

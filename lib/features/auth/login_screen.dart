@@ -68,7 +68,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     decoration: BoxDecoration(
                         color: Colors.white24, borderRadius: BorderRadius.circular(12)),
                     alignment: Alignment.center,
-                    child: const Text('F',
+                    child: const Text(Brand.logoInitial,
                         style: TextStyle(
                             color: Colors.white, fontWeight: FontWeight.w800, fontSize: 20)),
                   ),

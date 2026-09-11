@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'state/auth_state.dart';
 import 'features/bootstrap/splash_screen.dart';
 import 'features/bootstrap/offline_screen.dart';
+import 'features/onboarding/onboarding_screen.dart';
 import 'features/shell/app_shell.dart';
 import 'features/dashboard/dashboard_screen.dart';
 import 'features/practice/practice_hub_screen.dart';
@@ -45,7 +46,14 @@ GoRouter buildRouter(AuthState auth) {
         case BootStatus.unauthed:
           return loc == '/login' ? null : '/login';
         case BootStatus.ready:
-          if (loc == '/splash' || loc == '/offline' || loc == '/login') return '/';
+          final onboarded = auth.user?.onboarded ?? true;
+          if (!onboarded) return loc == '/onboarding' ? null : '/onboarding';
+          if (loc == '/splash' ||
+              loc == '/offline' ||
+              loc == '/login' ||
+              loc == '/onboarding') {
+            return '/';
+          }
           return null;
       }
     },
@@ -53,6 +61,7 @@ GoRouter buildRouter(AuthState auth) {
     routes: [
       GoRoute(path: '/splash', builder: (c, s) => const SplashScreen()),
       GoRoute(path: '/offline', builder: (c, s) => const OfflineScreen()),
+      GoRoute(path: '/onboarding', builder: (c, s) => const OnboardingScreen()),
       StatefulShellRoute.indexedStack(
         builder: (context, state, shell) => AppShell(navigationShell: shell),
         branches: [
