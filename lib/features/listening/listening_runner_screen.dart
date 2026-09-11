@@ -9,9 +9,9 @@ import '../../state/auth_state.dart';
 import '../../theme/app_colors.dart';
 import '../../utils/format.dart';
 import '../../widgets/grading_overlay.dart';
-import '../../widgets/ui.dart';
 import '../exam/question_group_view.dart';
 import '../full_exam/full_exam_store.dart';
+import 'section_audio_player.dart';
 
 /// Server-scored listening runner: 4 sections, each with a play-once audio clip
 /// and one question group. Submits to POST /api/attempts.
@@ -29,9 +29,6 @@ class _ListeningRunnerScreenState extends State<ListeningRunnerScreen> {
   int _sIdx = 0;
   final Map<String, String> _answers = {};
   final Set<int> _played = {}; // sections whose audio finished
-  int _audioT = 0; // current playback position (sec) for the active section
-  bool _playing = false;
-  Timer? _audioTimer;
   late int _timeLeft;
   bool _submitting = false;
   Timer? _timer;
@@ -53,7 +50,6 @@ class _ListeningRunnerScreenState extends State<ListeningRunnerScreen> {
   @override
   void dispose() {
     _timer?.cancel();
-    _audioTimer?.cancel();
     super.dispose();
   }
 
@@ -61,33 +57,16 @@ class _ListeningRunnerScreenState extends State<ListeningRunnerScreen> {
   int get _totalQ => exam.sections.fold(0, (n, s) => n + s.group.questions.length);
   int get _answered => _answers.values.where((v) => v.trim().isNotEmpty).length;
 
-  void _playAudio() {
-    if (_played.contains(_sIdx) || _playing) return;
-    setState(() {
-      _playing = true;
-      _audioT = 0;
-    });
-    _audioTimer?.cancel();
-    _audioTimer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (!mounted) return;
-      if (_audioT >= _section.audioDurationSec) {
-        _audioTimer?.cancel();
-        setState(() {
-          _playing = false;
-          _played.add(_sIdx);
-        });
-      } else {
-        setState(() => _audioT++);
-      }
-    });
+  String? _resolvedAudioUrl(BuildContext context) {
+    final path = _section.audioUrl;
+    if (path == null) return null;
+    if (path.startsWith('http')) return path;
+    return '${context.read<AuthState>().api.config.mediaBase}$path';
   }
 
   void _gotoSection(int i) {
-    _audioTimer?.cancel();
     setState(() {
       _sIdx = i;
-      _playing = false;
-      _audioT = 0;
     });
   }
 
@@ -95,7 +74,6 @@ class _ListeningRunnerScreenState extends State<ListeningRunnerScreen> {
     if (_submitting) return;
     setState(() => _submitting = true);
     _timer?.cancel();
-    _audioTimer?.cancel();
     final used = exam.durationSec - _timeLeft;
     try {
       final dto = await context.read<AuthState>().api.submitAttempt(AttemptRequest(
@@ -209,7 +187,13 @@ class _ListeningRunnerScreenState extends State<ListeningRunnerScreen> {
           child: ListView(
             padding: const EdgeInsets.all(16),
             children: [
-              _audioCard(),
+              SectionAudioPlayer(
+                key: ValueKey('audio-$_sIdx'),
+                audioUrl: _resolvedAudioUrl(context),
+                durationSec: _section.audioDurationSec,
+                alreadyPlayed: _played.contains(_sIdx),
+                onCompleted: () => setState(() => _played.add(_sIdx)),
+              ),
               const SizedBox(height: 14),
               Text(_section.context, style: const TextStyle(fontWeight: FontWeight.w700)),
               const SizedBox(height: 4),
@@ -225,64 +209,6 @@ class _ListeningRunnerScreenState extends State<ListeningRunnerScreen> {
           ),
         ),
         _bottomBar(isLast),
-      ]),
-    );
-  }
-
-  Widget _audioCard() {
-    final played = _played.contains(_sIdx);
-    final dur = _section.audioDurationSec;
-    final progress = _playing ? (_audioT / dur).clamp(0.0, 1.0) : (played ? 1.0 : 0.0);
-    return FluentaCard(
-      child: Column(children: [
-        Row(children: [
-          FilledButton(
-            style: FilledButton.styleFrom(
-                shape: const CircleBorder(), minimumSize: const Size(52, 52), padding: EdgeInsets.zero,
-                backgroundColor: played ? AppColors.mutedForeground : AppColors.primary),
-            onPressed: (played || _playing) ? null : _playAudio,
-            child: Icon(played ? Icons.check_rounded : Icons.play_arrow_rounded, size: 26),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(children: [
-              SizedBox(
-                height: 30,
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: List.generate(40, (i) {
-                    final active = (i / 40) <= progress;
-                    final h = 6 + ((i * 7) % 22).toDouble();
-                    return Expanded(
-                      child: Container(
-                        margin: const EdgeInsets.symmetric(horizontal: 0.8),
-                        height: h,
-                        decoration: BoxDecoration(
-                          color: active ? AppColors.primary : AppColors.border,
-                          borderRadius: BorderRadius.circular(2),
-                        ),
-                      ),
-                    );
-                  }),
-                ),
-              ),
-              const SizedBox(height: 4),
-              Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                Text('${pad2(_playing ? _audioT ~/ 60 : (played ? dur ~/ 60 : 0))}:${pad2(_playing ? _audioT % 60 : (played ? dur % 60 : 0))}',
-                    style: const TextStyle(fontSize: 11.5, color: AppColors.mutedForeground)),
-                Text('${pad2(dur ~/ 60)}:${pad2(dur % 60)}',
-                    style: const TextStyle(fontSize: 11.5, color: AppColors.mutedForeground)),
-              ]),
-            ]),
-          ),
-        ]),
-        const SizedBox(height: 8),
-        Text(
-          played
-              ? 'Audio played. In the real test each section plays once.'
-              : 'The audio plays once — playback is simulated in this preview.',
-          style: const TextStyle(fontSize: 11.5, color: AppColors.mutedForeground),
-        ),
       ]),
     );
   }
