@@ -32,6 +32,8 @@ The Flutter app was built 2026-09-03 and mirrors the **old** Fluenta prototype (
 1. **Scope:** full **student** parity with current web. **No admin Content Studio** on mobile.
 2. **Data:** wire to the Spring Boot backend, with a **persisted, user-editable "Server URL"** so the owner demo can point at the laptop's LAN IP over WiFi (e.g. `http://192.168.1.50:8080/api`).
 3. **Demo targets:** primary = **physical Android phone (APK)** on the same WiFi as the laptop; secondary = **Flutter web at phone size** on the laptop.
+6. **Two environments** (§9): dev/verification on **this machine** (Java can't bind → **Node stub API**), and the owner demo on a **different laptop** (real Spring Boot backend, phone over WiFi).
+7. **graphify** kept current as a **per-phase step** (no auto-hook for now).
 4. **Bottom nav:** **4 tabs** — Home · Practice · Coach · More (Progress dropped, merged into Home).
 5. **Approach:** **evolve the existing app in place** (reuse theme/models/router/screens); do not rebuild.
 
@@ -104,7 +106,7 @@ Unchanged and already approved on web — **do not re-derive it**. Faithfully ke
 
 Each phase ends with: `flutter analyze` clean, the phase's screens verified, and a **graphify update** (see §8).
 
-- **P0 — foundation:** add `http` + `shared_preferences`; `app_config` + persisted Server URL; `api_client` with auth/exams/attempts/content/overview/feedback groups + error model; split `AuthState`/`AppState`; bootstrap gate (splash / offline+Retry); token persistence.
+- **P0 — foundation:** add `http` + `shared_preferences`; `app_config` + persisted Server URL; `api_client` with auth/exams/attempts/content/overview/feedback groups + error model; split `AuthState`/`AppState`; bootstrap gate (splash / offline+Retry); token persistence. Also stand up the **Node stub API** (env A) so every later phase can be verified locally.
 - **P1 — identity:** rebrand (`brand.dart`, logo "Y", app title); login wired to API + Server-URL field on login; 4-step onboarding → `PATCH /me`.
 - **P2 — home & nav:** Overview rebuild (all sections) from `/overview` + `/me`; drop Progress tab → 4-tab shell; 6-skill grid with coming-soon.
 - **P3 — practice & runners:** Practice hub (6 skills, Mock Exam hidden); wire Reading runner to API + server-scored attempt + results; then Listening, Writing, Speaking runners the same way.
@@ -130,13 +132,20 @@ How the requested skills map to this project (used where they genuinely help; no
 
 **graphify rule (standing):** after any code change to `fluenta-mobile`, update the graphify knowledge graph so `graphify-out/` stays current. Baseline is built in P0; each phase re-indexes what changed. A cross-session hard guarantee would be a `settings.json` hook — offered separately.
 
-## 9. Prerequisites & risks (demo-blocking)
+## 9. Environments, prerequisites & risks
 
-- ⚠️ **Backend must run on a reachable host.** On *this* machine the Java server can't bind (local proxy intercepts the NIO loopback selector — see `fluenta-web/backend/README.md`). If the demo laptop is this machine, resolve first (allow `java.exe` loopback, or run via Docker/WSL/another host).
-- **LAN reachability:** run the backend so it binds all interfaces (Spring Boot default); phone + laptop on the same WiFi; the laptop firewall must allow inbound **:8080**.
-- **Flutter-web path only:** the browser enforces CORS → add the Flutter-web origin to the backend CORS allowlist (small change in `fluenta-web/backend`). The native APK is unaffected.
+Two runtime environments (user's decision):
+
+**A — Dev / verification (this machine).** The Java backend **can't bind here** (a local proxy intercepts the NIO loopback selector — see `fluenta-web/backend/README.md`; not fixable from code). So local development and verification run a thin **Node stub API** on `:8080` that serves the student endpoint subset (§6) from the seed with the exact DTO shapes (Node/libuv binds fine here — same approach used for the web browser checks, scratchpad `mock-api.mjs`). The Flutter app (web at phone size, or an emulator) points at `http://localhost:8080/api`, proving the wiring end-to-end without the Java server.
+
+**B — Owner demo (a different laptop).** The real Spring Boot backend runs on the owner's laptop (binds normally). The phone (APK) joins the same WiFi and the Server URL is set to that laptop's LAN IP (e.g. `http://192.168.1.x:8080/api`).
+
+Prereqs & risks:
+- **LAN reachability (B):** Spring Boot binds all interfaces by default; phone + laptop on the same WiFi; the laptop firewall must allow inbound **:8080**.
+- **Flutter-web path only:** the browser enforces CORS → the API host must allow the Flutter-web origin. The Node stub sends permissive CORS; the real backend needs the origin added to its allowlist (small change in `fluenta-web/backend`). The native APK is unaffected by CORS.
+- **Node stub fidelity:** the stub must mirror `api.ts` DTOs exactly, or the app passes locally but breaks on the real backend. Keep it thin and DTO-accurate; the **phone-against-real-backend** pass is the source of truth.
 - **Flutter web + CanvasKit** is laggy/opaque to automate — verify the web path manually; the phone APK is the real demo.
-- **Server-scored attempts:** mobile's `AttemptRequest` mirrors web's shape, so the existing `/attempts` scorer applies unchanged.
+- **Server-scored attempts:** mobile's `AttemptRequest` mirrors web's shape, so the real `/attempts` scorer applies unchanged; the stub replicates the scored-result shape.
 
 ## 10. Out of scope (this round)
 
@@ -151,4 +160,5 @@ Admin Content Studio; real AI (coach/writing/speaking/live/generate); real payme
 - AI actions show "coming soon" and never crash on a 501.
 - Server URL is editable and persists across restarts.
 - Builds and runs as an Android APK on a device over WiFi, and as Flutter web at phone size.
+- **Verified in both environments:** each phase passes locally against the Node stub (env A) on this machine; final acceptance is the **phone APK against the real Spring Boot backend** on the owner's laptop (env B).
 - `flutter analyze` clean; graphify graph current.
