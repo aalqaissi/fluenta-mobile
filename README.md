@@ -37,30 +37,46 @@ Point the app at your backend by editing **Server URL** in-app (default
 
 ### Physical Android phone (primary demo) over WiFi
 
-1. Run the backend on your laptop (binds all interfaces by default; allow inbound `:8080` in
-   the firewall).
-2. Phone + laptop on the same WiFi.
-3. Build and install the APK, then set **Server URL** on the login screen to your laptop's LAN
-   IP, e.g. `http://192.168.1.50:8080/api`.
+**1. Build the APK** (always use the full clean sequence — it avoids stale-cache build
+failures and picks up dependency/manifest changes):
 
 ```bash
 cd D:\personal\fluenta-mobile
-flutter build apk            # release; APK at build/app/outputs/flutter-apk/app-release.apk
-flutter install             # install to a connected device (or copy the APK to the phone)
+flutter clean
+flutter pub get
+flutter build apk
 ```
 
-Use `flutter build apk --debug` for a faster debug build (`app-debug.apk`).
+Release APK: `build/app/outputs/flutter-apk/app-release.apk` (~52 MB). Install to a connected
+device with `flutter install`, or copy the APK to the phone. Use `flutter build apk --debug`
+for a faster debug build. The manifest already grants `INTERNET` + cleartext HTTP so the release
+app can reach a plain-http LAN backend (Flutter only adds these to debug builds by default).
+
+**2. Let the phone reach the backend:**
+
+- Run the backend on your laptop — it binds all interfaces (`0.0.0.0:8080`) by default.
+- **Open the firewall for port 8080** (Windows blocks inbound on a "Public" Wi-Fi by default).
+  In an **Administrator** terminal:
+  ```bash
+  netsh advfirewall firewall add rule name="Yalla backend 8080" dir=in action=allow protocol=TCP localport=8080
+  ```
+- Phone + laptop on the **same Wi-Fi**. Find the laptop's Wi-Fi IPv4 with `ipconfig` (the
+  `192.168.x.x` under "Wireless LAN adapter Wi-Fi" — **not** a `172.x`/vEthernet virtual adapter).
+- Sanity check from the phone browser: open `http://<laptop-ip>:8080/api/tracks` — a small JSON
+  response (even a `401`) means it's reachable.
+
+**3. In the app:** set **Server URL** to `http://<laptop-ip>:8080/api` (e.g.
+`http://192.168.100.9:8080/api`) on the login screen, then sign in.
 
 > **If the build fails with `Unable to establish loopback connection` or a Kotlin
-> `Could not close incremental caches / already registered` error:** this machine's local
-> loopback proxy blocks fresh Gradle/Kotlin **daemons**, and interrupted builds can corrupt the
-> Kotlin incremental cache. `android/gradle.properties` already sets `org.gradle.daemon=false`,
+> `Could not close incremental caches / already registered` error:** a local loopback proxy is
+> blocking fresh Gradle/Kotlin **daemons**, and interrupted builds can corrupt the Kotlin
+> incremental cache. `android/gradle.properties` already sets `org.gradle.daemon=false`,
 > `kotlin.compiler.execution.strategy=in-process`, and `kotlin.incremental=false` to avoid both.
-> If it still fails, clear the state and rebuild:
+> If it still fails, stop any daemon and rebuild clean:
 > ```bash
-> cd D:\personal\fluenta-mobile
-> cd android && .\gradlew --stop && cd ..
-> flutter clean && flutter build apk
+> cd D:\personal\fluenta-mobile\android && .\gradlew --stop && cd ..
+> flutter clean && flutter pub get && flutter build apk
 > ```
 > (Those `gradle.properties` flags are only needed where the loopback proxy runs — remove them
 > on a normal machine, where the daemons are faster.)
