@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import 'state/auth_state.dart';
+import 'features/bootstrap/splash_screen.dart';
+import 'features/bootstrap/offline_screen.dart';
 import 'features/shell/app_shell.dart';
 import 'features/dashboard/dashboard_screen.dart';
 import 'features/practice/practice_hub_screen.dart';
@@ -27,14 +30,29 @@ import 'features/auth/login_screen.dart';
 
 final _rootKey = GlobalKey<NavigatorState>();
 
-GoRouter buildRouter() {
+GoRouter buildRouter(AuthState auth) {
   return GoRouter(
     navigatorKey: _rootKey,
     initialLocation: '/',
-    // Any unknown/unmatched location falls back to the dashboard instead of
-    // showing go_router's "page not found" screen (e.g. a hard refresh on web).
+    refreshListenable: auth,
+    redirect: (context, state) {
+      final loc = state.matchedLocation;
+      switch (auth.status) {
+        case BootStatus.booting:
+          return loc == '/splash' ? null : '/splash';
+        case BootStatus.offline:
+          return loc == '/offline' ? null : '/offline';
+        case BootStatus.unauthed:
+          return loc == '/login' ? null : '/login';
+        case BootStatus.ready:
+          if (loc == '/splash' || loc == '/offline' || loc == '/login') return '/';
+          return null;
+      }
+    },
     errorBuilder: (context, state) => const _NotFoundRedirect(),
     routes: [
+      GoRoute(path: '/splash', builder: (c, s) => const SplashScreen()),
+      GoRoute(path: '/offline', builder: (c, s) => const OfflineScreen()),
       StatefulShellRoute.indexedStack(
         builder: (context, state, shell) => AppShell(navigationShell: shell),
         branches: [
@@ -45,7 +63,6 @@ GoRouter buildRouter() {
           StatefulShellBranch(routes: [GoRoute(path: '/more', builder: (c, s) => const MoreScreen())]),
         ],
       ),
-      // full-screen routes (root navigator)
       GoRoute(path: '/login', builder: (c, s) => const LoginScreen()),
       GoRoute(path: '/reading', builder: (c, s) => const ReadingHubScreen()),
       GoRoute(path: '/writing', builder: (c, s) => const WritingHubScreen()),
