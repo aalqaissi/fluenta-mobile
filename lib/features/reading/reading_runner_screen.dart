@@ -11,6 +11,7 @@ import '../../theme/app_colors.dart';
 import '../../utils/format.dart';
 import '../../widgets/grading_overlay.dart';
 import '../exam/question_group_view.dart';
+import '../full_exam/full_exam_store.dart';
 
 const _highlightFill = {
   'yellow': Color(0xFFFDE68A),
@@ -30,7 +31,8 @@ const _highlightSwatch = {
 class ReadingRunnerScreen extends StatefulWidget {
   final ReadingExam exam;
   final String examId;
-  const ReadingRunnerScreen({super.key, required this.exam, required this.examId});
+  final bool full; // part of a full-exam session
+  const ReadingRunnerScreen({super.key, required this.exam, required this.examId, this.full = false});
   @override
   State<ReadingRunnerScreen> createState() => _ReadingRunnerScreenState();
 }
@@ -102,7 +104,13 @@ class _ReadingRunnerScreenState extends State<ReadingRunnerScreen> {
       AttemptStore.lastReadingExam = exam;
       if (!mounted) return;
       await showGradingDialog(context);
-      if (mounted) context.go('/results/reading');
+      if (!mounted) return;
+      if (widget.full) {
+        FullExamStore.record('reading', dto.band);
+        context.go('/full-exam');
+      } else {
+        context.go('/results/reading');
+      }
     } on ApiException catch (e) {
       if (!mounted) return;
       setState(() => _submitting = false);

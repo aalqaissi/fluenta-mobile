@@ -111,6 +111,11 @@ class ApiClient {
           .map((e) => CertificateDto.fromJson(Map<String, dynamic>.from(e as Map)))
           .toList());
 
+  Future<CertificateDto> createCertificate(Map<String, dynamic> dto) =>
+      _request('POST', '/certificates',
+          body: dto,
+          decode: (json) => CertificateDto.fromJson(json as Map<String, dynamic>));
+
   Future<List<Track>> getTracks() => _request('GET', '/tracks',
       decode: (json) => (json as List)
           .map((e) => Track.fromJson(Map<String, dynamic>.from(e as Map)))

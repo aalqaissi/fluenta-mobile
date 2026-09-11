@@ -11,7 +11,8 @@ import 'reading_runner_screen.dart';
 /// to the runtime model, then hands off to [ReadingRunnerScreen].
 class ReadingLoaderScreen extends StatefulWidget {
   final String? examId;
-  const ReadingLoaderScreen({super.key, this.examId});
+  final bool full;
+  const ReadingLoaderScreen({super.key, this.examId, this.full = false});
   @override
   State<ReadingLoaderScreen> createState() => _ReadingLoaderScreenState();
 }
@@ -72,7 +73,7 @@ class _ReadingLoaderScreenState extends State<ReadingLoaderScreen> {
           );
         }
         final (exam, id) = snap.data!;
-        return ReadingRunnerScreen(exam: exam, examId: id);
+        return ReadingRunnerScreen(exam: exam, examId: id, full: widget.full);
       },
     );
   }

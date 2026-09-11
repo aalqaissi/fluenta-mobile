@@ -5,6 +5,16 @@ String formatBand(double? n) {
 
 String pad2(int n) => n.toString().padLeft(2, '0');
 
+/// Rough IELTS band → CEFR level.
+String cefrForBand(double band) {
+  if (band >= 8.5) return 'C2';
+  if (band >= 7) return 'C1';
+  if (band >= 5.5) return 'B2';
+  if (band >= 4) return 'B1';
+  if (band >= 3) return 'A2';
+  return 'A1';
+}
+
 String prettyDate(DateTime d) {
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   return '${d.day} ${months[d.month - 1]} ${d.year}';

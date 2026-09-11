@@ -11,13 +11,15 @@ import '../../utils/format.dart';
 import '../../widgets/grading_overlay.dart';
 import '../../widgets/ui.dart';
 import '../exam/question_group_view.dart';
+import '../full_exam/full_exam_store.dart';
 
 /// Server-scored listening runner: 4 sections, each with a play-once audio clip
 /// and one question group. Submits to POST /api/attempts.
 class ListeningRunnerScreen extends StatefulWidget {
   final ListeningRunExam exam;
   final String examId;
-  const ListeningRunnerScreen({super.key, required this.exam, required this.examId});
+  final bool full; // part of a full-exam session
+  const ListeningRunnerScreen({super.key, required this.exam, required this.examId, this.full = false});
   @override
   State<ListeningRunnerScreen> createState() => _ListeningRunnerScreenState();
 }
@@ -112,7 +114,13 @@ class _ListeningRunnerScreenState extends State<ListeningRunnerScreen> {
       AttemptStore.lastListeningExam = exam;
       if (!mounted) return;
       await showGradingDialog(context);
-      if (mounted) context.go('/results/listening');
+      if (!mounted) return;
+      if (widget.full) {
+        FullExamStore.record('listening', dto.band);
+        context.go('/full-exam');
+      } else {
+        context.go('/results/listening');
+      }
     } on ApiException catch (e) {
       if (!mounted) return;
       setState(() => _submitting = false);

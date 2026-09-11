@@ -11,7 +11,8 @@ import 'listening_runner_screen.dart';
 /// the server-scored [ListeningRunnerScreen].
 class ListeningLoaderScreen extends StatefulWidget {
   final String? examId;
-  const ListeningLoaderScreen({super.key, this.examId});
+  final bool full;
+  const ListeningLoaderScreen({super.key, this.examId, this.full = false});
   @override
   State<ListeningLoaderScreen> createState() => _ListeningLoaderScreenState();
 }
@@ -71,7 +72,7 @@ class _ListeningLoaderScreenState extends State<ListeningLoaderScreen> {
           );
         }
         final (exam, id) = snap.data!;
-        return ListeningRunnerScreen(exam: exam, examId: id);
+        return ListeningRunnerScreen(exam: exam, examId: id, full: widget.full);
       },
     );
   }
