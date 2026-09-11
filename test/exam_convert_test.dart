@@ -69,4 +69,46 @@ void main() {
     expect(g2.type, QuestionType.multipleChoice);
     expect(g2.questions.first.options!.map((o) => o.key), ['A', 'B']);
   });
+
+  test('listeningExamFromContent maps sections + single group per section', () {
+    const content = {
+      'id': 'listen-x', 'title': 'Listening X', 'durationSec': 1800,
+      'sections': [
+        {
+          'id': 'ls1', 'number': 1, 'context': 'A conversation.', 'audioDurationSec': 60,
+          'group': {
+            'id': 'ls1-g', 'type': 'sentence-completion', 'rangeLabel': 'Questions 1–2',
+            'instructions': 'Complete the notes.',
+            'questions': [
+              {'id': 'ls1q1', 'number': 1, 'prompt': 'Booked for __ hours.', 'correct': 'four', 'wordLimit': 'ONE WORD'},
+              {'id': 'ls1q2', 'number': 2, 'prompt': 'Deposit in __ days.', 'correct': 'five'},
+            ],
+          },
+        },
+      ],
+    };
+    final exam = listeningExamFromContent(Map<String, dynamic>.from(content));
+    expect(exam.id, 'listen-x');
+    expect(exam.durationSec, 1800);
+    expect(exam.sections.length, 1);
+    final s = exam.sections.first;
+    expect(s.number, 1);
+    expect(s.audioDurationSec, 60);
+    expect(s.group.type, QuestionType.sentenceCompletion);
+    expect(s.group.questions.first.correct, 'four');
+  });
+
+  test('speakingPartsFromContent maps parts, cue card and questions', () {
+    const content = {
+      'parts': [
+        {'id': 's1', 'number': 1, 'title': 'Interview', 'questions': ['Q1', 'Q2']},
+        {'id': 's2', 'number': 2, 'title': 'Long turn', 'cueCard': 'Describe a skill.', 'bullets': ['what', 'why'], 'questions': []},
+      ],
+    };
+    final parts = speakingPartsFromContent(Map<String, dynamic>.from(content));
+    expect(parts.length, 2);
+    expect(parts.first.questions, ['Q1', 'Q2']);
+    expect(parts[1].cueCard, 'Describe a skill.');
+    expect(parts[1].bullets, ['what', 'why']);
+  });
 }

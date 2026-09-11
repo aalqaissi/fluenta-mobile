@@ -712,6 +712,34 @@ class ListeningSection {
   const ListeningSection({required this.number, required this.context, required this.questionCount});
 }
 
+/// Runtime listening exam (from a backend runner-format exam): 4 sections, each
+/// with a single question group. Objectively scored like reading.
+class ListeningRunSection {
+  final int number;
+  final String context;
+  final int audioDurationSec;
+  final QuestionGroup group;
+  const ListeningRunSection({
+    required this.number,
+    required this.context,
+    required this.audioDurationSec,
+    required this.group,
+  });
+}
+
+class ListeningRunExam {
+  final String id;
+  final String title;
+  final int durationSec;
+  final List<ListeningRunSection> sections;
+  const ListeningRunExam({
+    required this.id,
+    required this.title,
+    required this.durationSec,
+    required this.sections,
+  });
+}
+
 class SpeakingPart {
   final int number;
   final String title;

@@ -2,7 +2,10 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../mock/data.dart';
+import '../../models/models.dart';
+import '../../services/exam_convert.dart';
 import '../../state/app_state.dart';
+import '../../state/auth_state.dart';
 import '../../theme/app_colors.dart';
 import '../../utils/format.dart';
 import '../../widgets/ui.dart';
@@ -19,6 +22,30 @@ class _SpeakingScreenState extends State<SpeakingScreen> {
   bool _done = false;
   int _elapsed = 0;
   Timer? _timer;
+  List<SpeakingPart> _parts = speakingParts; // local fallback until API loads
+
+  @override
+  void initState() {
+    super.initState();
+    _loadParts();
+  }
+
+  Future<void> _loadParts() async {
+    try {
+      final list = await context.read<AuthState>().api.listExams(skill: 'speaking', status: 'published');
+      final runner = list.where((e) => e.format == 'runner').toList();
+      if (runner.isEmpty) return;
+      final parts = speakingPartsFromContent(runner.first.content);
+      if (parts.isNotEmpty && mounted) {
+        setState(() {
+          _parts = parts;
+          if (_part >= _parts.length) _part = 0;
+        });
+      }
+    } catch (_) {
+      /* keep the local fallback */
+    }
+  }
 
   void _toggle() {
     if (_recording) {
@@ -51,7 +78,7 @@ class _SpeakingScreenState extends State<SpeakingScreen> {
   @override
   Widget build(BuildContext context) {
     final locked = context.watch<AppState>().isLocked('speaking');
-    final part = speakingParts[_part];
+    final part = _parts[_part];
     return Scaffold(
       appBar: AppBar(title: const Text('Speaking practice')),
       body: ListView(
@@ -112,7 +139,7 @@ class _SpeakingScreenState extends State<SpeakingScreen> {
             height: 62,
             child: ListView(
               scrollDirection: Axis.horizontal,
-              children: speakingParts.asMap().entries.map((e) {
+              children: _parts.asMap().entries.map((e) {
                 final sel = _part == e.key;
                 return Padding(
                   padding: const EdgeInsets.only(right: 8),
@@ -150,7 +177,7 @@ class _SpeakingScreenState extends State<SpeakingScreen> {
                 const SizedBox(height: 8),
                 const Text('You should say:', style: TextStyle(color: AppColors.mutedForeground, fontSize: 13)),
                 const SizedBox(height: 4),
-                ...part.bullets!.map((b) => Padding(
+                ...(part.bullets ?? const <String>[]).map((b) => Padding(
                       padding: const EdgeInsets.only(bottom: 2),
                       child: Text('•  $b', style: const TextStyle(fontSize: 13.5)),
                     )),

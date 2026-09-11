@@ -42,6 +42,8 @@ const List<GradingStep> gradingSteps = [
 class AttemptStore {
   static ReadingAttempt? lastReading;
   static ReadingExam? lastReadingExam; // the exam actually taken (for review)
+  static ReadingAttempt? lastListening; // reuses the generic attempt shape
+  static ListeningRunExam? lastListeningExam;
   static WritingAttempt? lastWriting;
 }
 

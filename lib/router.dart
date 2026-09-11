@@ -16,7 +16,8 @@ import 'features/reading/reading_results_screen.dart';
 import 'features/writing/writing_hub_screen.dart';
 import 'features/writing/writing_editor_screen.dart';
 import 'features/writing/writing_results_screen.dart';
-import 'features/listening/listening_screen.dart';
+import 'features/listening/listening_loader_screen.dart';
+import 'features/listening/listening_results_screen.dart';
 import 'features/speaking/speaking_screen.dart';
 import 'features/full_exam/full_exam_screen.dart';
 import 'features/mock_exams/mock_exams_screen.dart';
@@ -74,7 +75,10 @@ GoRouter buildRouter(AuthState auth) {
       GoRoute(path: '/login', builder: (c, s) => const LoginScreen()),
       GoRoute(path: '/reading', builder: (c, s) => const ReadingHubScreen()),
       GoRoute(path: '/writing', builder: (c, s) => const WritingHubScreen()),
-      GoRoute(path: '/listening', builder: (c, s) => const ListeningScreen()),
+      GoRoute(
+          path: '/listening',
+          builder: (c, s) => ListeningLoaderScreen(examId: s.uri.queryParameters['id'])),
+      GoRoute(path: '/results/listening', builder: (c, s) => const ListeningResultsScreen()),
       GoRoute(path: '/speaking', builder: (c, s) => const SpeakingScreen()),
       GoRoute(path: '/full-exam', builder: (c, s) => const FullExamScreen()),
       GoRoute(path: '/mock-exams', builder: (c, s) => const MockExamsScreen()),
