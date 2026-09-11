@@ -35,30 +35,62 @@ flutter pub get
 Point the app at your backend by editing **Server URL** in-app (default
 `http://localhost:8080/api`).
 
-**Physical Android phone (primary demo) over WiFi:**
+### Physical Android phone (primary demo) over WiFi
+
 1. Run the backend on your laptop (binds all interfaces by default; allow inbound `:8080` in
    the firewall).
 2. Phone + laptop on the same WiFi.
-3. Install the APK (`build/app/outputs/flutter-apk/app-debug.apk`) and set Server URL to your
-   laptop's LAN IP, e.g. `http://192.168.1.50:8080/api`.
+3. Build and install the APK, then set **Server URL** on the login screen to your laptop's LAN
+   IP, e.g. `http://192.168.1.50:8080/api`.
 
 ```bash
-flutter build apk --debug        # or --release
-flutter install                  # to a connected device
+cd D:\personal\fluenta-mobile
+flutter build apk            # release; APK at build/app/outputs/flutter-apk/app-release.apk
+flutter install             # install to a connected device (or copy the APK to the phone)
 ```
 
-**Android emulator on the laptop:** Server URL = `http://10.0.2.2:8080/api`.
+Use `flutter build apk --debug` for a faster debug build (`app-debug.apk`).
 
-**Flutter web at phone size (laptop preview):** `flutter run -d chrome` — the backend must
-allow the web origin in its CORS config (native APK is unaffected).
+> **If the build fails with `Unable to establish loopback connection` or a Kotlin
+> `Could not close incremental caches / already registered` error:** this machine's local
+> loopback proxy blocks fresh Gradle/Kotlin **daemons**, and interrupted builds can corrupt the
+> Kotlin incremental cache. `android/gradle.properties` already sets `org.gradle.daemon=false`,
+> `kotlin.compiler.execution.strategy=in-process`, and `kotlin.incremental=false` to avoid both.
+> If it still fails, clear the state and rebuild:
+> ```bash
+> cd D:\personal\fluenta-mobile
+> cd android && .\gradlew --stop && cd ..
+> flutter clean && flutter build apk
+> ```
+> (Those `gradle.properties` flags are only needed where the loopback proxy runs — remove them
+> on a normal machine, where the daemons are faster.)
+
+### Android emulator on the laptop
+
+Server URL = `http://10.0.2.2:8080/api` (the emulator's alias for the host).
+
+### Flutter web at phone size (laptop preview / quick test)
+
+The browser enforces CORS, and the backend allows the origin `http://localhost:5173` — so serve
+the web build on **port 5173** (any other port gets its API calls blocked):
+
+```bash
+cd D:\personal\fluenta-mobile
+flutter build web
+python -m http.server 5173 --directory build/web    # then open http://localhost:5173
+```
+
+For live reload while developing: `flutter run -d chrome --web-port=5173`.
 
 ## Local verification without the Java backend
 
-The Java server can't always bind on the dev machine. A dependency-free stub mirrors the
-student API for local checks:
+When the backend is down or can't bind, a dependency-free Node stub mirrors the student API
+(login/me, overview, exams with scoring, attempts, achievements, certificates, tracks,
+feedback, lessons/plans/progress):
 
 ```bash
-node tools/mock-api/server.mjs   # http://localhost:8080/api  (auth/me; grows per phase)
+node tools/mock-api/server.mjs                 # http://localhost:8080/api
+PORT=9090 node tools/mock-api/server.mjs       # then set Server URL to http://localhost:9090/api
 ```
 
 ## Tests
