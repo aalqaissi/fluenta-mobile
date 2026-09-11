@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../models/models.dart';
+import '../services/api_client.dart';
 import '../state/app_state.dart';
+import '../state/auth_state.dart';
 import '../theme/app_colors.dart';
 import '../utils/format.dart';
 import 'ui.dart';
@@ -146,8 +149,12 @@ class _FeedbackSheet extends StatefulWidget {
   State<_FeedbackSheet> createState() => _FeedbackSheetState();
 }
 
+const _feedbackCategories = ['general', 'bug', 'feature', 'content', 'other'];
+
 class _FeedbackSheetState extends State<_FeedbackSheet> {
   int _rating = 0;
+  String _category = 'general';
+  bool _submitting = false;
   final _subject = TextEditingController();
   final _message = TextEditingController();
 
@@ -156,6 +163,29 @@ class _FeedbackSheetState extends State<_FeedbackSheet> {
     _subject.dispose();
     _message.dispose();
     super.dispose();
+  }
+
+  Future<void> _submit() async {
+    if (_subject.text.trim().isEmpty && _message.text.trim().isEmpty) {
+      showToast(context, 'Please add a subject or message');
+      return;
+    }
+    setState(() => _submitting = true);
+    try {
+      await context.read<AuthState>().api.createFeedback(CreateFeedback(
+            category: _category,
+            subject: _subject.text.trim(),
+            message: _message.text.trim(),
+            rating: _rating == 0 ? null : _rating,
+          ));
+      if (!mounted) return;
+      Navigator.pop(context);
+      showToast(context, 'Thanks for your feedback!', description: 'We read every note.');
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() => _submitting = false);
+      showToast(context, 'Could not send feedback', description: e.message);
+    }
   }
 
   @override
@@ -187,6 +217,17 @@ class _FeedbackSheetState extends State<_FeedbackSheet> {
               }),
             ),
             const SizedBox(height: 8),
+            const Text('Category', style: TextStyle(fontWeight: FontWeight.w700)),
+            const SizedBox(height: 6),
+            DropdownButtonFormField<String>(
+              initialValue: _category,
+              items: [
+                for (final c in _feedbackCategories)
+                  DropdownMenuItem(value: c, child: Text(c[0].toUpperCase() + c.substring(1))),
+              ],
+              onChanged: (v) => setState(() => _category = v ?? 'general'),
+            ),
+            const SizedBox(height: 14),
             const Text('Subject', style: TextStyle(fontWeight: FontWeight.w700)),
             const SizedBox(height: 6),
             TextField(controller: _subject, decoration: const InputDecoration(hintText: 'Brief summary of your feedback')),
@@ -198,11 +239,10 @@ class _FeedbackSheetState extends State<_FeedbackSheet> {
             SizedBox(
               width: double.infinity,
               child: FilledButton.icon(
-                onPressed: () {
-                  Navigator.pop(context);
-                  showToast(context, 'Thanks for your feedback!', description: 'We read every note.');
-                },
-                icon: const Icon(Icons.send_rounded, size: 18),
+                onPressed: _submitting ? null : _submit,
+                icon: _submitting
+                    ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                    : const Icon(Icons.send_rounded, size: 18),
                 label: const Text('Submit feedback'),
               ),
             ),

@@ -100,4 +100,28 @@ class ApiClient {
 
   Future<AttemptDto> getAttempt(String id) => _request('GET', '/attempts/$id',
       decode: (json) => AttemptDto.fromJson(json as Map<String, dynamic>));
+
+  Future<List<AchievementDto>> getAchievements() => _request('GET', '/achievements',
+      decode: (json) => (json as List)
+          .map((e) => AchievementDto.fromJson(Map<String, dynamic>.from(e as Map)))
+          .toList());
+
+  Future<List<CertificateDto>> getCertificates() => _request('GET', '/certificates',
+      decode: (json) => (json as List)
+          .map((e) => CertificateDto.fromJson(Map<String, dynamic>.from(e as Map)))
+          .toList());
+
+  Future<List<Track>> getTracks() => _request('GET', '/tracks',
+      decode: (json) => (json as List)
+          .map((e) => Track.fromJson(Map<String, dynamic>.from(e as Map)))
+          .toList());
+
+  Future<FeedbackDto> createFeedback(CreateFeedback req) => _request('POST', '/feedback',
+      body: req.toJson(),
+      decode: (json) => FeedbackDto.fromJson(json as Map<String, dynamic>));
+
+  Future<List<FeedbackDto>> listFeedback() => _request('GET', '/feedback',
+      decode: (json) => (json as List)
+          .map((e) => FeedbackDto.fromJson(Map<String, dynamic>.from(e as Map)))
+          .toList());
 }

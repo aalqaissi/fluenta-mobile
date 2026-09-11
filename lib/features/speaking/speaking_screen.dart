@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../mock/data.dart';
 import '../../state/app_state.dart';
@@ -59,6 +58,56 @@ class _SpeakingScreenState extends State<SpeakingScreen> {
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
         children: [
           if (locked) const UpgradeBanner('Speaking practice'),
+          FluentaCard(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              const Text('Choose a mode', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15.5)),
+              const SizedBox(height: 10),
+              Row(children: [
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: 0.06),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: AppColors.primary),
+                    ),
+                    child: const Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      Icon(Icons.mic_rounded, color: AppColors.primary),
+                      SizedBox(height: 6),
+                      Text('Standard Practice', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13.5)),
+                      Text('3 parts, self-paced', style: TextStyle(fontSize: 11.5, color: AppColors.mutedForeground)),
+                    ]),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(14),
+                    onTap: () => showToast(context, 'Live Interview is coming soon',
+                        description: 'Real-time AI examiner conversation.'),
+                    child: Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: AppColors.border),
+                      ),
+                      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                        Row(children: const [
+                          Icon(Icons.record_voice_over_rounded, color: AppColors.mutedForeground),
+                          Spacer(),
+                          PillBadge('Soon', color: AppColors.mutedForeground),
+                        ]),
+                        const SizedBox(height: 6),
+                        const Text('Live Interview', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13.5)),
+                        const Text('Adaptive AI examiner', style: TextStyle(fontSize: 11.5, color: AppColors.mutedForeground)),
+                      ]),
+                    ),
+                  ),
+                ),
+              ]),
+            ]),
+          ),
+          const SizedBox(height: 14),
           SizedBox(
             height: 62,
             child: ListView(
@@ -158,34 +207,22 @@ class _SpeakingScreenState extends State<SpeakingScreen> {
                 Icon(Icons.auto_awesome, color: AppColors.primary, size: 18),
                 SizedBox(width: 6),
                 Text('AI feedback', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15.5)),
+                Spacer(),
+                PillBadge('Soon', color: AppColors.mutedForeground),
               ]),
               const SizedBox(height: 8),
-              if (!_done)
-                const Text('Record your answer to see a band estimate and coaching notes for each speaking criterion.',
-                    style: TextStyle(color: AppColors.mutedForeground, fontSize: 13))
-              else ...[
-                ...sampleSpeakingFeedback.map((f) => Container(
-                      margin: const EdgeInsets.only(bottom: 10),
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(border: Border.all(color: AppColors.border), borderRadius: BorderRadius.circular(12)),
-                      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                          Text(f.label, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5)),
-                          Text(formatBand(f.band), style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: AppColors.bandTone(f.band))),
-                        ]),
-                        const SizedBox(height: 4),
-                        Text(f.note, style: const TextStyle(color: AppColors.mutedForeground, fontSize: 12.5)),
-                      ]),
-                    )),
-                SizedBox(
-                  width: double.infinity,
-                  child: FilledButton.icon(
-                    onPressed: () => context.go('/coach'),
-                    icon: const Icon(Icons.smart_toy_outlined, size: 18),
-                    label: const Text('Discuss with Fluenta Coach'),
-                  ),
+              const Text(
+                  'Band estimates and per-criterion coaching for Speaking are coming soon. Record your answer to keep practising in the meantime.',
+                  style: TextStyle(color: AppColors.mutedForeground, fontSize: 13)),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  onPressed: null, // AI held
+                  icon: const Icon(Icons.send_rounded, size: 18),
+                  label: const Text('Submit for AI feedback'),
                 ),
-              ],
+              ),
             ]),
           ),
         ],

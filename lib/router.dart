@@ -20,6 +20,7 @@ import 'features/listening/listening_screen.dart';
 import 'features/speaking/speaking_screen.dart';
 import 'features/full_exam/full_exam_screen.dart';
 import 'features/mock_exams/mock_exams_screen.dart';
+import 'features/feedback/feedback_list_screen.dart';
 import 'features/lessons/lessons_screen.dart';
 import 'features/achievements/achievements_screen.dart';
 import 'features/certificates/certificates_screen.dart';
@@ -80,6 +81,7 @@ GoRouter buildRouter(AuthState auth) {
       GoRoute(path: '/lessons', builder: (c, s) => const LessonsScreen()),
       GoRoute(path: '/achievements', builder: (c, s) => const AchievementsScreen()),
       GoRoute(path: '/certificates', builder: (c, s) => const CertificatesScreen()),
+      GoRoute(path: '/feedback', builder: (c, s) => const FeedbackListScreen()),
       GoRoute(path: '/checkout', builder: (c, s) => const CheckoutScreen()),
       GoRoute(path: '/settings', builder: (c, s) => const SettingsScreen()),
       GoRoute(path: '/help', builder: (c, s) => const HelpScreen()),

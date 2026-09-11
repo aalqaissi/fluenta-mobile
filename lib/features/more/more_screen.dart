@@ -5,6 +5,7 @@ import '../../state/app_state.dart';
 import '../../theme/app_colors.dart';
 import '../../widgets/modals.dart';
 import '../../widgets/ui.dart';
+import '../tracks/track_switcher.dart';
 
 class MoreScreen extends StatelessWidget {
   const MoreScreen({super.key});
@@ -40,12 +41,14 @@ class MoreScreen extends StatelessWidget {
           ),
           const SizedBox(height: 16),
 
+          _tile(context, Icons.swap_horiz_rounded, 'Learning track', () => showTrackSwitcher(context)),
           _tile(context, Icons.library_books_outlined, 'Lessons & Library', () => context.push('/lessons')),
           _tile(context, Icons.emoji_events_outlined, 'Achievements', () => context.push('/achievements')),
           _tile(context, Icons.workspace_premium_outlined, 'Certificates', () => context.push('/certificates')),
           _tile(context, Icons.credit_card_outlined, app.isPro ? 'Manage plan' : 'Upgrade to Pro', () => context.push('/checkout')),
           _tile(context, Icons.settings_outlined, 'Account & privacy', () => context.push('/settings')),
           _tile(context, Icons.help_outline_rounded, 'Help & support', () => context.push('/help')),
+          _tile(context, Icons.reviews_outlined, 'My feedback', () => context.push('/feedback')),
           _tile(context, Icons.forum_outlined, 'Give feedback', () => showFeedbackSheet(context)),
 
           const SizedBox(height: 16),

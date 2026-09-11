@@ -451,6 +451,135 @@ class AttemptDto {
       );
 }
 
+// ---- Achievements / Certificates / Tracks / Feedback (backend DTOs) ----
+class AchievementDto {
+  final String id, title, description, category, tier, icon, status;
+  final int points, progress;
+  final String? unlockedOn;
+  const AchievementDto({
+    required this.id,
+    required this.title,
+    required this.description,
+    required this.category,
+    required this.tier,
+    required this.icon,
+    required this.status,
+    required this.points,
+    required this.progress,
+    this.unlockedOn,
+  });
+  bool get unlocked => status == 'unlocked';
+  factory AchievementDto.fromJson(Map<String, dynamic> j) => AchievementDto(
+        id: (j['id'] as String?) ?? '',
+        title: (j['title'] as String?) ?? '',
+        description: (j['description'] as String?) ?? '',
+        category: (j['category'] as String?) ?? 'general',
+        tier: (j['tier'] as String?) ?? 'bronze',
+        icon: (j['icon'] as String?) ?? '',
+        status: (j['status'] as String?) ?? 'locked',
+        points: (j['points'] as num?)?.toInt() ?? 0,
+        progress: (j['progress'] as num?)?.toInt() ?? 0,
+        unlockedOn: j['unlockedOn'] as String?,
+      );
+}
+
+class CertificateDto {
+  final String id, title, candidate, type, verificationNumber, module, issuedOn, cefr, status;
+  final double overall;
+  final Map<String, double> scores;
+  const CertificateDto({
+    required this.id,
+    required this.title,
+    required this.candidate,
+    required this.type,
+    required this.verificationNumber,
+    required this.module,
+    required this.issuedOn,
+    required this.cefr,
+    required this.status,
+    required this.overall,
+    required this.scores,
+  });
+  factory CertificateDto.fromJson(Map<String, dynamic> j) => CertificateDto(
+        id: (j['id'] as String?) ?? '',
+        title: (j['title'] as String?) ?? '',
+        candidate: (j['candidate'] as String?) ?? '',
+        type: (j['type'] as String?) ?? 'standard',
+        verificationNumber: (j['verificationNumber'] as String?) ?? '',
+        module: (j['module'] as String?) ?? 'academic',
+        issuedOn: (j['issuedOn'] as String?) ?? '',
+        cefr: (j['cefr'] as String?) ?? '',
+        status: (j['status'] as String?) ?? 'issued',
+        overall: (j['overall'] as num?)?.toDouble() ?? 0,
+        scores: ((j['scores'] as Map?) ?? {})
+            .map((k, v) => MapEntry(k as String, (v as num?)?.toDouble() ?? 0)),
+      );
+}
+
+class Track {
+  final String key, name, short, status, icon, description;
+  const Track({
+    required this.key,
+    required this.name,
+    required this.short,
+    required this.status,
+    required this.icon,
+    required this.description,
+  });
+  bool get active => status == 'active';
+  factory Track.fromJson(Map<String, dynamic> j) => Track(
+        key: (j['key'] as String?) ?? '',
+        name: (j['name'] as String?) ?? '',
+        short: (j['short'] as String?) ?? '',
+        status: (j['status'] as String?) ?? 'coming-soon',
+        icon: (j['icon'] as String?) ?? '',
+        description: (j['description'] as String?) ?? '',
+      );
+}
+
+class FeedbackDto {
+  final String id, category, subject, message, status, createdAt;
+  final int? rating;
+  final String? adminReply;
+  const FeedbackDto({
+    required this.id,
+    required this.category,
+    required this.subject,
+    required this.message,
+    required this.status,
+    required this.createdAt,
+    this.rating,
+    this.adminReply,
+  });
+  factory FeedbackDto.fromJson(Map<String, dynamic> j) => FeedbackDto(
+        id: (j['id'] as String?) ?? '',
+        category: (j['category'] as String?) ?? 'general',
+        subject: (j['subject'] as String?) ?? '',
+        message: (j['message'] as String?) ?? '',
+        status: (j['status'] as String?) ?? 'new',
+        createdAt: (j['createdAt'] as String?) ?? '',
+        rating: (j['rating'] as num?)?.toInt(),
+        adminReply: j['adminReply'] as String?,
+      );
+}
+
+class CreateFeedback {
+  final String category, subject, message;
+  final int? rating;
+  const CreateFeedback({
+    required this.category,
+    required this.subject,
+    required this.message,
+    this.rating,
+  });
+  Map<String, dynamic> toJson() => {
+        'category': category,
+        'subject': subject,
+        'message': message,
+        'rating': rating,
+      };
+}
+
 class QuestionOption {
   final String key;
   final String text;
