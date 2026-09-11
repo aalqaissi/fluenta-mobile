@@ -1,6 +1,6 @@
 // Domain models for the Fluenta mobile prototype (mirror the web TS types).
 
-enum SkillKey { reading, writing, listening, speaking }
+enum SkillKey { reading, writing, listening, speaking, vocabulary, grammar }
 
 extension SkillLabel on SkillKey {
   String get label => switch (this) {
@@ -8,8 +8,15 @@ extension SkillLabel on SkillKey {
         SkillKey.writing => 'Writing',
         SkillKey.listening => 'Listening',
         SkillKey.speaking => 'Speaking',
+        SkillKey.vocabulary => 'Vocabulary',
+        SkillKey.grammar => 'Grammar',
       };
+  String get key => name;
 }
+
+/// Vocabulary & Grammar are dashboard-tracked but their practice runners are
+/// "coming soon" (parity with the web app's COMING_SOON_SKILLS).
+const Set<String> comingSoonSkills = {'vocabulary', 'grammar'};
 
 enum PlanTier { free, pro }
 
@@ -204,6 +211,119 @@ class SectionSummary {
   final double? band;
   final int tests;
   const SectionSummary({required this.skill, required this.band, required this.tests});
+}
+
+// ---- Overview / analytics (mirrors backend OverviewDto) ----
+class SkillStat {
+  final String key;
+  final String label;
+  final double? band;
+  final int tests;
+  const SkillStat({required this.key, required this.label, this.band, required this.tests});
+  factory SkillStat.fromJson(Map<String, dynamic> j) => SkillStat(
+        key: j['key'] as String,
+        label: j['label'] as String,
+        band: (j['band'] as num?)?.toDouble(),
+        tests: (j['tests'] as num?)?.toInt() ?? 0,
+      );
+}
+
+class SkillPoint {
+  final String key;
+  final String label;
+  final double band;
+  const SkillPoint({required this.key, required this.label, required this.band});
+  factory SkillPoint.fromJson(Map<String, dynamic> j) => SkillPoint(
+        key: j['key'] as String,
+        label: j['label'] as String,
+        band: (j['band'] as num).toDouble(),
+      );
+}
+
+class SeriesPoint {
+  final String date;
+  final double band;
+  const SeriesPoint({required this.date, required this.band});
+  factory SeriesPoint.fromJson(Map<String, dynamic> j) => SeriesPoint(
+        date: j['date'] as String,
+        band: (j['band'] as num).toDouble(),
+      );
+}
+
+class ActivityItem {
+  final String id;
+  final String type; // completed | submitted | feedback | unfinished
+  final String skill;
+  final String title;
+  final String date;
+  final double? band;
+  const ActivityItem({
+    required this.id,
+    required this.type,
+    required this.skill,
+    required this.title,
+    required this.date,
+    this.band,
+  });
+  factory ActivityItem.fromJson(Map<String, dynamic> j) => ActivityItem(
+        id: j['id'] as String,
+        type: j['type'] as String,
+        skill: (j['skill'] as String?) ?? '',
+        title: j['title'] as String,
+        date: (j['date'] as String?) ?? '',
+        band: (j['band'] as num?)?.toDouble(),
+      );
+}
+
+class Overview {
+  final double targetBand;
+  final double currentAverage;
+  final double gapToTarget;
+  final int testsCompleted;
+  final List<SkillStat> skills;
+  final SkillPoint? strongest;
+  final SkillPoint? weakest;
+  final Map<String, List<SeriesPoint>> series;
+  final List<ActivityItem> recentActivity;
+  const Overview({
+    required this.targetBand,
+    required this.currentAverage,
+    required this.gapToTarget,
+    required this.testsCompleted,
+    required this.skills,
+    required this.strongest,
+    required this.weakest,
+    required this.series,
+    required this.recentActivity,
+  });
+
+  factory Overview.fromJson(Map<String, dynamic> j) {
+    final rawSeries = (j['series'] as Map?) ?? const {};
+    return Overview(
+      targetBand: (j['targetBand'] as num?)?.toDouble() ?? 0,
+      currentAverage: (j['currentAverage'] as num?)?.toDouble() ?? 0,
+      gapToTarget: (j['gapToTarget'] as num?)?.toDouble() ?? 0,
+      testsCompleted: (j['testsCompleted'] as num?)?.toInt() ?? 0,
+      skills: ((j['skills'] as List?) ?? [])
+          .map((e) => SkillStat.fromJson(Map<String, dynamic>.from(e as Map)))
+          .toList(),
+      strongest: j['strongest'] is Map
+          ? SkillPoint.fromJson(Map<String, dynamic>.from(j['strongest'] as Map))
+          : null,
+      weakest: j['weakest'] is Map
+          ? SkillPoint.fromJson(Map<String, dynamic>.from(j['weakest'] as Map))
+          : null,
+      series: {
+        for (final entry in rawSeries.entries)
+          entry.key as String: ((entry.value as List?) ?? [])
+              .map((e) => SeriesPoint.fromJson(Map<String, dynamic>.from(e as Map)))
+              .toList(),
+      },
+      recentActivity: ((j['recentActivity'] as List?) ?? [])
+          .map((e) => ActivityItem.fromJson(Map<String, dynamic>.from(e as Map)))
+          .toList(),
+    );
+  }
 }
 
 class QuestionOption {

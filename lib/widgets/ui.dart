@@ -305,6 +305,10 @@ SkillVisual skillVisual(String skill) {
       return const SkillVisual(Icons.headphones_rounded, AppColors.secondary);
     case 'speaking':
       return const SkillVisual(Icons.mic_rounded, AppColors.primary);
+    case 'vocabulary':
+      return const SkillVisual(Icons.spellcheck_rounded, Color(0xFF7C3AED));
+    case 'grammar':
+      return const SkillVisual(Icons.rule_rounded, Color(0xFF2563EB));
     default:
       return const SkillVisual(Icons.school_rounded, AppColors.primary);
   }

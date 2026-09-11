@@ -73,4 +73,7 @@ class ApiClient {
   Future<FluentaUser> patchMe(Map<String, dynamic> patch) => _request('PATCH', '/me',
       body: patch,
       decode: (json) => FluentaUser.fromJson(json as Map<String, dynamic>));
+
+  Future<Overview> getOverview() => _request('GET', '/overview',
+      decode: (json) => Overview.fromJson(json as Map<String, dynamic>));
 }

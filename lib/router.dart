@@ -6,9 +6,8 @@ import 'features/bootstrap/splash_screen.dart';
 import 'features/bootstrap/offline_screen.dart';
 import 'features/onboarding/onboarding_screen.dart';
 import 'features/shell/app_shell.dart';
-import 'features/dashboard/dashboard_screen.dart';
+import 'features/overview/overview_screen.dart';
 import 'features/practice/practice_hub_screen.dart';
-import 'features/progress/progress_screen.dart';
 import 'features/coach/coach_screen.dart';
 import 'features/more/more_screen.dart';
 import 'features/reading/reading_hub_screen.dart';
@@ -65,9 +64,8 @@ GoRouter buildRouter(AuthState auth) {
       StatefulShellRoute.indexedStack(
         builder: (context, state, shell) => AppShell(navigationShell: shell),
         branches: [
-          StatefulShellBranch(routes: [GoRoute(path: '/', builder: (c, s) => const DashboardScreen())]),
+          StatefulShellBranch(routes: [GoRoute(path: '/', builder: (c, s) => const OverviewScreen())]),
           StatefulShellBranch(routes: [GoRoute(path: '/practice', builder: (c, s) => const PracticeHubScreen())]),
-          StatefulShellBranch(routes: [GoRoute(path: '/progress', builder: (c, s) => const ProgressScreen())]),
           StatefulShellBranch(routes: [GoRoute(path: '/coach', builder: (c, s) => const CoachScreen())]),
           StatefulShellBranch(routes: [GoRoute(path: '/more', builder: (c, s) => const MoreScreen())]),
         ],
