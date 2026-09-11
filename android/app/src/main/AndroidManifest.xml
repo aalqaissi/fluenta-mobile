@@ -1,8 +1,13 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Required for the app to reach the backend API (release builds don't get
+         these automatically — only debug does). usesCleartextTraffic allows the
+         plain-http LAN backend used for the demo. -->
+    <uses-permission android:name="android.permission.INTERNET"/>
     <application
-        android:label="fluenta_mobile"
+        android:label="Yalla English Hub"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/ic_launcher"
+        android:usesCleartextTraffic="true">
         <activity
             android:name=".MainActivity"
             android:exported="true"
