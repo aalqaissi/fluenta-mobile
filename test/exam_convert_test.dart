@@ -98,6 +98,17 @@ void main() {
     expect(s.group.questions.first.correct, 'four');
   });
 
+  test('listening section carries audioUrl when present', () {
+    final exam = listeningExamFromContent({
+      'sections': [
+        {'number': 1, 'context': 'Intro', 'audioDurationSec': 90, 'audioUrl': '/media/abc.mp3', 'group': {}},
+        {'number': 2, 'context': 'Next', 'audioDurationSec': 60, 'group': {}},
+      ],
+    });
+    expect(exam.sections[0].audioUrl, '/media/abc.mp3');
+    expect(exam.sections[1].audioUrl, isNull);
+  });
+
   test('speakingPartsFromContent maps parts, cue card and questions', () {
     const content = {
       'parts': [
