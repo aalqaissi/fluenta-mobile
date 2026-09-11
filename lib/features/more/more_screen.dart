@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../state/app_state.dart';
+import '../../state/auth_state.dart';
 import '../../theme/app_colors.dart';
 import '../../widgets/modals.dart';
 import '../../widgets/ui.dart';
@@ -69,7 +70,7 @@ class MoreScreen extends StatelessWidget {
           const SizedBox(height: 16),
           OutlinedButton.icon(
             style: OutlinedButton.styleFrom(foregroundColor: AppColors.destructive, side: const BorderSide(color: Color(0x66DC2626))),
-            onPressed: () => context.go('/login'),
+            onPressed: () => context.read<AuthState>().logout(),
             icon: const Icon(Icons.logout_rounded),
             label: const Text('Sign out'),
           ),

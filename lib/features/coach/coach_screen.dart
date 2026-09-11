@@ -1,10 +1,8 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../config/brand.dart';
 import '../../mock/data.dart';
 import '../../models/models.dart';
 import '../../theme/app_colors.dart';
-import '../../widgets/ui.dart';
 
 class CoachScreen extends StatefulWidget {
   const CoachScreen({super.key});
@@ -16,7 +14,7 @@ class _CoachScreenState extends State<CoachScreen> {
   final List<CoachMessage> _messages = List.of(initialCoachMessages);
   final _controller = TextEditingController();
   final _scroll = ScrollController();
-  bool _typing = false;
+  final bool _typing = false;
 
   @override
   void dispose() {
@@ -25,52 +23,29 @@ class _CoachScreenState extends State<CoachScreen> {
     super.dispose();
   }
 
-  Future<void> _send(String text) async {
-    if (text.trim().isEmpty) return;
-    setState(() {
-      _messages.add(CoachMessage('user', text));
-      _typing = true;
-      _controller.clear();
-    });
-    _scrollDown();
-    await Future.delayed(const Duration(milliseconds: 900));
-    if (!mounted) return;
-    setState(() {
-      _typing = false;
-      _messages.add(CoachMessage('coach', coachReplyFor(text)));
-    });
-    _scrollDown();
-  }
-
-  void _scrollDown() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_scroll.hasClients) {
-        _scroll.animateTo(_scroll.position.maxScrollExtent + 120,
-            duration: const Duration(milliseconds: 250), curve: Curves.easeOut);
-      }
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
-    final showSuggestions = _messages.length <= 2;
     return Scaffold(
       appBar: AppBar(title: const Text(Brand.coachName)),
       body: Column(
         children: [
-          SizedBox(
-            height: 42,
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.fromLTRB(16, 6, 16, 6),
-              children: const [
-                PillBadge('Personalized to your results', color: AppColors.info, icon: Icons.auto_awesome),
-                SizedBox(width: 6),
-                PillBadge('Reading · 3.5', color: AppColors.mutedForeground, icon: Icons.menu_book_rounded),
-                SizedBox(width: 6),
-                PillBadge('Writing · 5.0', color: AppColors.mutedForeground, icon: Icons.edit_rounded),
-              ],
+          Container(
+            margin: const EdgeInsets.fromLTRB(16, 10, 16, 6),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: AppColors.secondary.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: AppColors.secondary.withValues(alpha: 0.4)),
             ),
+            child: const Row(children: [
+              Icon(Icons.auto_awesome, color: AppColors.onSecondary, size: 18),
+              SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                    '${Brand.coachName} is coming soon — real-time AI coaching on your results is on the way.',
+                    style: TextStyle(fontSize: 12.5)),
+              ),
+            ]),
           ),
           Expanded(
             child: ListView.builder(
@@ -83,25 +58,6 @@ class _CoachScreenState extends State<CoachScreen> {
               },
             ),
           ),
-          if (showSuggestions)
-            SizedBox(
-              height: 44,
-              child: ListView(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                children: coachSuggestions.map((s) {
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 4),
-                    child: ActionChip(
-                      label: Text(s, style: const TextStyle(fontSize: 12.5)),
-                      backgroundColor: AppColors.surface,
-                      shape: StadiumBorder(side: BorderSide(color: AppColors.border)),
-                      onPressed: () => _send(s),
-                    ),
-                  );
-                }).toList(),
-              ),
-            ),
           _composer(),
         ],
       ),
@@ -174,15 +130,14 @@ class _CoachScreenState extends State<CoachScreen> {
           Expanded(
             child: TextField(
               controller: _controller,
-              onSubmitted: _send,
-              textInputAction: TextInputAction.send,
-              decoration: InputDecoration(hintText: 'Message ${Brand.coachName}…'),
+              enabled: false, // AI held
+              decoration: const InputDecoration(hintText: 'Chat coming soon…'),
             ),
           ),
           const SizedBox(width: 8),
           FilledButton(
             style: FilledButton.styleFrom(minimumSize: const Size(52, 52), padding: EdgeInsets.zero, shape: const CircleBorder()),
-            onPressed: () => _send(_controller.text),
+            onPressed: null, // AI held
             child: const Icon(Icons.send_rounded, size: 20),
           ),
         ]),

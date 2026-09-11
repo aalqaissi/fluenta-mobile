@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import '../../services/api_client.dart';
 import '../../state/app_state.dart';
+import '../../state/auth_state.dart';
 import '../../theme/app_colors.dart';
 import '../../widgets/modals.dart';
 import '../../widgets/ui.dart';
@@ -34,22 +35,7 @@ class SettingsScreen extends StatelessWidget {
             ]),
           ),
           const SizedBox(height: 14),
-          FluentaCard(
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              const Text('Login method', style: TextStyle(fontWeight: FontWeight.w800)),
-              const Text('Your authentication provider.', style: TextStyle(color: AppColors.mutedForeground, fontSize: 12.5)),
-              const SizedBox(height: 10),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(border: Border.all(color: AppColors.border), borderRadius: BorderRadius.circular(12)),
-                child: const Row(children: [
-                  Icon(Icons.g_mobiledata_rounded, size: 28, color: Color(0xFF4285F4)),
-                  SizedBox(width: 8),
-                  Text('Google', style: TextStyle(fontWeight: FontWeight.w700)),
-                ]),
-              ),
-            ]),
-          ),
+          const _ServerUrlCard(),
           const SizedBox(height: 14),
           FluentaCard(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -92,7 +78,7 @@ class SettingsScreen extends StatelessWidget {
                       confirmLabel: 'Delete account');
                   if (ok && context.mounted) {
                     showToast(context, 'Account deleted (demo)');
-                    context.go('/login');
+                    context.read<AuthState>().logout();
                   }
                 },
                 icon: const Icon(Icons.delete_outline_rounded),
@@ -100,8 +86,94 @@ class SettingsScreen extends StatelessWidget {
               ),
             ]),
           ),
+          const SizedBox(height: 14),
+          OutlinedButton.icon(
+            style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.destructive,
+                side: const BorderSide(color: Color(0x66DC2626))),
+            onPressed: () => context.read<AuthState>().logout(),
+            icon: const Icon(Icons.logout_rounded),
+            label: const Text('Sign out'),
+          ),
         ],
       ),
+    );
+  }
+}
+
+/// Editable, persisted backend Server URL — lets the owner-demo point the app
+/// at the laptop's LAN IP over WiFi, and re-connect without reinstalling.
+class _ServerUrlCard extends StatefulWidget {
+  const _ServerUrlCard();
+  @override
+  State<_ServerUrlCard> createState() => _ServerUrlCardState();
+}
+
+class _ServerUrlCardState extends State<_ServerUrlCard> {
+  late final TextEditingController _c;
+  bool _busy = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _c = TextEditingController(text: context.read<AuthState>().config.serverUrl);
+  }
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  Future<void> _saveAndReconnect() async {
+    final auth = context.read<AuthState>();
+    setState(() => _busy = true);
+    await auth.config.setServerUrl(_c.text);
+    try {
+      await auth.bootstrap(); // re-fetch /me against the new URL
+      if (!mounted) return;
+      showToast(context, 'Connected', description: auth.config.serverUrl);
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      showToast(context, 'Saved, but could not connect', description: e.message);
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FluentaCard(
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        const Row(children: [
+          Icon(Icons.dns_outlined, size: 18, color: AppColors.mutedForeground),
+          SizedBox(width: 8),
+          Text('Server connection', style: TextStyle(fontWeight: FontWeight.w800)),
+        ]),
+        const SizedBox(height: 4),
+        const Text('Point the app at the backend. On the same WiFi, use your laptop IP.',
+            style: TextStyle(color: AppColors.mutedForeground, fontSize: 12.5)),
+        const SizedBox(height: 10),
+        TextField(
+          controller: _c,
+          keyboardType: TextInputType.url,
+          decoration: const InputDecoration(
+            border: OutlineInputBorder(),
+            helperText: 'e.g. http://192.168.1.50:8080/api',
+          ),
+        ),
+        const SizedBox(height: 10),
+        SizedBox(
+          width: double.infinity,
+          child: FilledButton.icon(
+            onPressed: _busy ? null : _saveAndReconnect,
+            icon: _busy
+                ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                : const Icon(Icons.sync_rounded, size: 18),
+            label: const Text('Save & reconnect'),
+          ),
+        ),
+      ]),
     );
   }
 }
