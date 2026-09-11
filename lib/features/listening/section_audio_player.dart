@@ -42,7 +42,7 @@ class _SectionAudioPlayerState extends State<SectionAudioPlayer> {
   void initState() {
     super.initState();
     _played = widget.alreadyPlayed;
-    if (_isReal) _initReal();
+    if (_isReal && !widget.alreadyPlayed) _initReal();
   }
 
   Future<void> _initReal() async {
@@ -54,6 +54,7 @@ class _SectionAudioPlayerState extends State<SectionAudioPlayer> {
     _stateSub = p.playerStateStream.listen((st) {
       if (!mounted) return;
       if (st.processingState == ProcessingState.completed) {
+        if (_played) return;
         setState(() { _playing = false; _played = true; });
         p.pause();
         p.seek(Duration.zero);
@@ -145,7 +146,7 @@ class _SectionAudioPlayerState extends State<SectionAudioPlayer> {
               ),
               const SizedBox(height: 4),
               Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                Text('${pad2(_t ~/ 60)}:${pad2(_t % 60)}',
+                Text('${pad2((_played ? dur : _t) ~/ 60)}:${pad2((_played ? dur : _t) % 60)}',
                     style: const TextStyle(fontSize: 11.5, color: AppColors.mutedForeground)),
                 Text('${pad2(dur ~/ 60)}:${pad2(dur % 60)}',
                     style: const TextStyle(fontSize: 11.5, color: AppColors.mutedForeground)),
