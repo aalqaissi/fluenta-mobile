@@ -1,15 +1,26 @@
 import 'package:flutter/foundation.dart';
 import '../models/models.dart';
 import '../mock/data.dart';
+import 'auth_state.dart';
 
+/// App-level preferences. The current user + auth live in [AuthState];
+/// AppState delegates `user`/plan lookups to it once [bind] is called.
 class AppState extends ChangeNotifier {
-  FluentaUser _user = currentUser;
+  AuthState? _auth;
   bool _previewFree = false;
+  String track = 'ielts';
 
-  FluentaUser get user => _user;
+  /// Wire this AppState to the AuthState so `user` reflects the signed-in
+  /// account and consumers rebuild when auth changes.
+  void bind(AuthState auth) {
+    _auth = auth;
+    auth.addListener(notifyListeners);
+  }
+
+  FluentaUser get user => _auth?.user ?? currentUser;
   bool get previewFree => _previewFree;
 
-  PlanTier get effectivePlan => _previewFree ? PlanTier.free : _user.plan;
+  PlanTier get effectivePlan => _previewFree ? PlanTier.free : user.plan;
   bool get isPro => effectivePlan == PlanTier.pro;
 
   /// listening / speaking / full-exam are locked on the free tier.
@@ -23,18 +34,15 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  // These now persist through the API (PATCH /me) via AuthState.
   void setExamDate(DateTime date, double targetBand) {
-    _user = _user.copyWith(examDate: date, targetBand: targetBand);
-    notifyListeners();
+    _auth?.updateMe({
+      'examDate': date.toIso8601String().split('T').first,
+      'targetBand': targetBand,
+    });
   }
 
-  void clearExamDate() {
-    _user = _user.copyWith(clearExamDate: true);
-    notifyListeners();
-  }
+  void clearExamDate() => _auth?.updateMe({'examDate': ''});
 
-  void setSaveHistory(bool v) {
-    _user = _user.copyWith(saveHistory: v);
-    notifyListeners();
-  }
+  void setSaveHistory(bool v) => _auth?.updateMe({'saveHistory': v});
 }
