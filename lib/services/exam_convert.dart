@@ -36,6 +36,7 @@ ListeningRunSection _listeningSection(Map<String, dynamic> s) => ListeningRunSec
       number: (s['number'] as num?)?.toInt() ?? 1,
       context: (s['context'] as String?) ?? '',
       audioDurationSec: (s['audioDurationSec'] as num?)?.toInt() ?? 60,
+      audioUrl: s['audioUrl'] as String?,
       group: _group(Map<String, dynamic>.from((s['group'] as Map?) ?? const {})),
     );
 

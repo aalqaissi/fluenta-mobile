@@ -19,6 +19,9 @@ class AppConfig {
   Future<void> setServerUrl(String url) =>
       _prefs.setString(serverUrlKey, _normalize(url));
 
+  /// Server origin for static media (`/media/**`): serverUrl without the trailing `/api`.
+  String get mediaBase => serverUrl.replaceFirst(RegExp(r'/api/?$'), '');
+
   String? get token => _prefs.getString(tokenKey);
 
   Future<void> setToken(String? value) => value == null

@@ -718,11 +718,13 @@ class ListeningRunSection {
   final int number;
   final String context;
   final int audioDurationSec;
+  final String? audioUrl;
   final QuestionGroup group;
   const ListeningRunSection({
     required this.number,
     required this.context,
     required this.audioDurationSec,
+    this.audioUrl,
     required this.group,
   });
 }
