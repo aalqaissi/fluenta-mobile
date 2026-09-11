@@ -1,49 +1,90 @@
-# Fluenta Mobile (Flutter)
+# Yalla English Hub — Mobile (Flutter)
 
-Native **Flutter** (Material 3) mobile version of the Fluenta IELTS prep prototype — same warm brand and mock content as the web app, adapted to a phone. **Frontend-only**: all data is mocked and AI grading is simulated. No backend.
+Native **Flutter** (Material 3) mobile app for **Yalla English Hub** (formerly Fluenta) — the
+IELTS/English practice platform. It mirrors the current web app and talks to the same
+**Spring Boot backend** over HTTP. Warm, encouraging design; Plus Jakarta Sans.
 
-- **Nav:** bottom bar — Home · Practice · Progress · Coach · More. Exam runner, writing editor, grading, and login are full-screen.
-- **State:** `provider` (`AppState`). **Routing:** `go_router`. **Fonts:** Plus Jakarta Sans via `google_fonts`.
+- **Nav:** bottom bar — Home · Practice · Coach · More. Login, onboarding, exam runner, and
+  results are full-screen.
+- **State/routing:** `provider` (`AuthState` owns auth + the current user; `AppState` holds
+  app prefs) · `go_router` with a connectivity/auth **bootstrap gate** (splash → offline+Retry →
+  login → onboarding → app).
+- **Data:** the real backend via a typed `ApiClient` (bearer auth, `ApiException`). The backend
+  base URL is a **persisted, editable "Server URL"** — set it on the login screen or in
+  Account & privacy.
+
+## What's implemented
+
+Login-first + 4-step onboarding · Overview home (Practice-by-Skill ×6, Progress Report with a
+band-over-time chart, Strengths & Weaknesses, Recent Activity, streak, plan) · **6 skills**
+(Vocabulary & Grammar are dashboard-only "coming soon") · Reading runner wired to the backend
+with **server-scored attempts** + review · Practice hub · Speaking (Standard practice +
+"Live Interview" coming soon) · Achievements · Certificates · My Feedback (submit + status) ·
+Learning-track switcher · Settings (Server URL, privacy, sign out).
+
+**Held (parity with web):** all AI features — Coach chat, Writing/Speaking AI feedback, Live
+Interview — show a "coming soon" state; `/api/ai/*` returns 501.
 
 ## Run
 
 ```bash
-cd mobile
+cd D:\personal\fluenta-mobile
 flutter pub get
 ```
 
-**On a mobile emulator / device** (best experience):
+Point the app at your backend by editing **Server URL** in-app (default
+`http://localhost:8080/api`).
+
+**Physical Android phone (primary demo) over WiFi:**
+1. Run the backend on your laptop (binds all interfaces by default; allow inbound `:8080` in
+   the firewall).
+2. Phone + laptop on the same WiFi.
+3. Install the APK (`build/app/outputs/flutter-apk/app-debug.apk`) and set Server URL to your
+   laptop's LAN IP, e.g. `http://192.168.1.50:8080/api`.
+
 ```bash
-flutter emulators --launch <id>   # or start one from Android Studio / Xcode
-flutter run
+flutter build apk --debug        # or --release
+flutter install                  # to a connected device
 ```
 
-**In a browser at phone size** (no emulator needed):
+**Android emulator on the laptop:** Server URL = `http://10.0.2.2:8080/api`.
+
+**Flutter web at phone size (laptop preview):** `flutter run -d chrome` — the backend must
+allow the web origin in its CORS config (native APK is unaffected).
+
+## Local verification without the Java backend
+
+The Java server can't always bind on the dev machine. A dependency-free stub mirrors the
+student API for local checks:
+
 ```bash
-flutter run -d chrome
+node tools/mock-api/server.mjs   # http://localhost:8080/api  (auth/me; grows per phase)
 ```
-Then use the browser devtools device toolbar to emulate a phone. (Or `flutter run -d web-server --web-port 8090` and open http://localhost:8090.)
 
-## Screens (all areas)
+## Tests
 
-Dashboard · Practice hub · Reading runner (all 11 IELTS question types, tap-to-highlight passage, find-text, timer) · AI grading · Reading results + review · Writing editor + AI feedback (criteria + inline annotations) · Listening (mock player) · Speaking (mock recorder + feedback) · Full Exam · Mock Exams (filter/upload/delete) · Progress · Fluenta Coach (interactive chat) · Lessons · Achievements · Certificates · Checkout · Account & privacy · Login.
+```bash
+flutter analyze
+flutter test
+```
 
-**Demo control:** More → **Preview free tier** flips to the free/locked experience (Pro locks + upsell banners) while keeping every feature usable.
+Unit/widget tests cover the config, models/JSON, `ApiClient` (via `http` MockClient), auth/app
+state, bootstrap gate, login, onboarding, overview, and the reading content converter.
 
 ## Layout
 
 ```
 lib/
-  config/brand.dart          # brand name + copy
-  theme/                     # warm Material 3 ColorScheme + tokens
-  models/models.dart         # data classes
-  mock/                      # fixtures + reading passages/questions
-  services/mock_api.dart     # simulated grading + scoring
-  state/app_state.dart       # ChangeNotifier
-  router.dart                # go_router (bottom-nav shell + routes)
-  widgets/                   # shared UI + modals + grading overlay
-  features/<area>/           # one folder per screen area
+  config/          brand.dart · app_config.dart (server URL + token)
+  models/models.dart
+  services/        api_client.dart · exam_convert.dart · mock_api.dart
+  state/           auth_state.dart · app_state.dart
+  router.dart      go_router + bootstrap gate redirect
+  features/<area>/ one folder per screen area
   main.dart
+tools/mock-api/    Node stub API (local verification)
+docs/superpowers/  design spec + phase plans
 ```
 
-> Prototype: no real backend, auth, payments, audio capture, or AI. Passage highlighting is tap-to-highlight (mobile stand-in for drag-select).
+> Prototype: login is any-email (no password), payments/audio capture are simulated, and AI is
+> held. See `docs/superpowers/specs/2026-09-11-yalla-mobile-parity-design.md`.
