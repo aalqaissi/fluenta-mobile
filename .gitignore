@@ -46,3 +46,6 @@ app.*.map.json
 
 # graphify machine-specific sidecars
 graphify-out/.graphify_*
+
+lib/graphify-out/
+graphify-out/cache/
