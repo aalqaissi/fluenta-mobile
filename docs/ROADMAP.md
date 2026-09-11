@@ -3,7 +3,7 @@
 A living checklist of remaining mobile work. **Pick items top-down and we'll build them.**
 Status: ☐ pending · ◐ in progress · ☑ done. Set the Pri column (P0/P1/P2) to reorder.
 
-_Last updated 2026-09-11._
+_Last updated 2026-09-12._
 
 ## Done (parity build + runners)
 
@@ -12,6 +12,7 @@ _Last updated 2026-09-11._
 - ☑ **Overview** home (band-over-time chart, Practice-by-Skill ×6, Strengths & Weaknesses, Recent Activity, streak, plan); 4-tab nav.
 - ☑ **Reading** runner — server-scored attempts + review.
 - ☑ **Listening** runner — server-scored attempts + review (4 sections, play-once audio).
+- ☑ **Real Listening audio** — admin uploads clips in the web Content Studio (`POST /api/media` → served at `/media/**`); sections carry `audioUrl` and the runner streams them via `just_audio`, with the simulated ticker as the fallback when a section has no clip. _On-device APK playback still to be verified on a host that can build (Gradle can't run on this dev machine — see notes below)._
 - ☑ **Speaking** — parts loaded from the backend (AI feedback held).
 - ☑ **Full Exam** — orchestrator (Listening + Reading scored back-to-back) → combined band + CEFR + generated certificate.
 - ☑ Achievements, Certificates, Feedback (submit + list), Track switcher.
@@ -21,7 +22,7 @@ _Last updated 2026-09-11._
 
 | Pri | Status | Item | Notes |
 |----|----|----|----|
-|  | ☐ | **Real audio** for Listening (and Speaking prompts) | Playback is simulated. Needs audio assets served by the backend (`audioUrl`) + a player (`just_audio`). Highest-value realism gap. |
+|  | ☐ | **Real audio for Speaking prompts** | Listening real audio is done (see above). Speaking prompts stay text-only for now; adding examiner-voice audio reuses the same media pipeline (`POST /api/media` + `audioUrl`) but needs audio fields on the speaking model + Studio speaking editor. |
 | | ☐ | **Writing runner** wired to backend | Backend serves no runner-format writing exam yet (only a `seed-w1` studio draft). Needs a studio→runtime converter (like the web's `studioWritingToExam`) + hook into the editor. Grading stays AI-held. |
 | | ☐ | **Lessons** from the API | Currently local seed; wire to `GET /api/lessons`. |
 | | ☐ | **Mobile polish** | Practice-by-Skill card proportions, empty/error states, larger-text/accessibility pass, optional dark mode. |
