@@ -662,6 +662,9 @@ class WritingTask {
   final String prompt;
   final int minWords;
   final int durationSec;
+  final String? visual;         // bar|line|pie|process|map|table (Academic T1); null otherwise
+  final List<String>? bullets;  // GT letter points (samples only); null otherwise
+  final String? module;         // academic|general|both (metadata; not filtered)
   const WritingTask({
     required this.id,
     required this.taskNumber,
@@ -669,6 +672,9 @@ class WritingTask {
     required this.prompt,
     required this.minWords,
     required this.durationSec,
+    this.visual,
+    this.bullets,
+    this.module,
   });
 }
 
