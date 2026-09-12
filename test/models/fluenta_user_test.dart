@@ -41,4 +41,14 @@ void main() {
     expect(json['examDate'], '2026-12-01');
     expect(json['onboarded'], true);
   });
+
+  test('role defaults to student when absent and reads admin when present', () {
+    final base = <String, dynamic>{
+      'id': 'u9', 'name': 'X', 'email': 'x@e.com', 'initials': 'X',
+      'plan': 'free', 'planLabel': 'Free', 'renewsInDays': 0, 'targetBand': 6.5,
+      'saveHistory': true, 'onboarded': true, 'streak': {'current': 0, 'best': 0, 'last30': []},
+    };
+    expect(FluentaUser.fromJson(base).role, 'student');
+    expect(FluentaUser.fromJson({...base, 'role': 'admin'}).role, 'admin');
+  });
 }
