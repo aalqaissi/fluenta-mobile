@@ -30,7 +30,7 @@ void main() {
       return http.Response(jsonEncode({'token': 't1', 'user': _userJson}), 200,
           headers: {'content-type': 'application/json'});
     }));
-    final result = await api.login('sara@example.com');
+    final result = await api.login('sara@example.com', 'yalla-demo');
     expect(result.token, 't1');
     expect(result.user.name, 'Sara Hamzeh');
     expect(result.user.onboarded, isTrue);
@@ -61,7 +61,7 @@ void main() {
     final config = await _config();
     final api = ApiClient(config, client: MockClient((req) async => throw Exception('down')));
     await expectLater(
-      api.login('x@y.com'),
+      api.login('x@y.com', 'yalla-demo'),
       throwsA(isA<ApiException>().having((e) => e.status, 'status', 0)),
     );
   });

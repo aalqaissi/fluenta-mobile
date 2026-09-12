@@ -14,7 +14,10 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   late final TextEditingController _email;
   late final TextEditingController _serverUrl;
+  late final TextEditingController _password;
+  late final TextEditingController _name;
   bool _busy = false;
+  bool _register = false;
 
   @override
   void initState() {
@@ -22,30 +25,53 @@ class _LoginScreenState extends State<LoginScreen> {
     final auth = context.read<AuthState>();
     _email = TextEditingController(text: 'sara.hamzeh@example.com');
     _serverUrl = TextEditingController(text: auth.config.serverUrl);
+    _password = TextEditingController();
+    _name = TextEditingController();
   }
 
   @override
   void dispose() {
     _email.dispose();
     _serverUrl.dispose();
+    _password.dispose();
+    _name.dispose();
     super.dispose();
   }
 
   Future<void> _signIn() async {
     final auth = context.read<AuthState>();
+    if (_register && _name.text.trim().isEmpty) {
+      _snack('Please enter your name.'); return;
+    }
+    if (_password.text.length < 8) {
+      _snack('Password must be at least 8 characters.'); return;
+    }
     setState(() => _busy = true);
     try {
       await auth.config.setServerUrl(_serverUrl.text);
-      await auth.login(_email.text.trim());
+      if (_register) {
+        await auth.register(_email.text.trim(), _password.text, _name.text.trim());
+      } else {
+        await auth.login(_email.text.trim(), _password.text);
+      }
       // The router redirect moves us to '/' once status == ready.
     } on ApiException catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(e.message)));
-      }
+      _snack(e.message);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
+  }
+
+  void _snack(String m) {
+    if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(m)));
+  }
+
+  void _fillDemo() {
+    setState(() {
+      _register = false;
+      _email.text = 'sara.hamzeh@example.com';
+      _password.text = 'yalla-demo';
+    });
   }
 
   @override
@@ -89,17 +115,32 @@ class _LoginScreenState extends State<LoginScreen> {
             Padding(
               padding: const EdgeInsets.all(24),
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                const Text('Welcome back',
-                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800)),
+                Text(_register ? 'Create your account' : 'Welcome back',
+                    style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800)),
                 const Text('Sign in to continue your IELTS journey.',
                     style: TextStyle(color: AppColors.mutedForeground)),
                 const SizedBox(height: 20),
+                if (_register) ...[
+                  TextField(
+                    key: const Key('login-name'),
+                    controller: _name,
+                    decoration: const InputDecoration(labelText: 'Full name', border: OutlineInputBorder()),
+                  ),
+                  const SizedBox(height: 12),
+                ],
                 TextField(
                   key: const Key('login-email'),
                   controller: _email,
                   keyboardType: TextInputType.emailAddress,
                   decoration: const InputDecoration(
                       labelText: 'Email', border: OutlineInputBorder()),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  key: const Key('login-password'),
+                  controller: _password,
+                  obscureText: true,
+                  decoration: const InputDecoration(labelText: 'Password', border: OutlineInputBorder()),
                 ),
                 const SizedBox(height: 12),
                 TextField(
@@ -124,16 +165,17 @@ class _LoginScreenState extends State<LoginScreen> {
                             width: 20, height: 20,
                             child: CircularProgressIndicator(
                                 strokeWidth: 2, color: Colors.white))
-                        : const Text('Sign in'),
+                        : Text(_register ? 'Create account' : 'Sign in'),
                   ),
                 ),
                 const SizedBox(height: 12),
-                const Center(
-                  child: Text(
-                      'Prototype — any email signs you in against the configured server.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 11.5, color: AppColors.mutedForeground)),
-                ),
+                Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                  TextButton(
+                    onPressed: _busy ? null : () => setState(() => _register = !_register),
+                    child: Text(_register ? 'I have an account' : 'Create an account'),
+                  ),
+                  TextButton(onPressed: _busy ? null : _fillDemo, child: const Text('Fill demo credentials')),
+                ]),
               ]),
             ),
           ]),

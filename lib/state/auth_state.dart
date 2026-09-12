@@ -44,8 +44,17 @@ class AuthState extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> login(String email) async {
-    final result = await api.login(email);
+  Future<void> login(String email, String password) async {
+    final result = await api.login(email, password);
+    await config.setToken(result.token);
+    _user = result.user;
+    _error = null;
+    _status = BootStatus.ready;
+    notifyListeners();
+  }
+
+  Future<void> register(String email, String password, String name) async {
+    final result = await api.register(email, password, name);
     await config.setToken(result.token);
     _user = result.user;
     _error = null;

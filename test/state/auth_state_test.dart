@@ -50,7 +50,7 @@ void main() {
     final auth = await _auth(
         client: MockClient((_) async =>
             http.Response(jsonEncode({'token': 't2', 'user': _userJson}), 200)));
-    await auth.login('sara@example.com');
+    await auth.login('sara@example.com', 'yalla-demo');
     expect(auth.status, BootStatus.ready);
     expect(auth.config.token, 't2');
   });

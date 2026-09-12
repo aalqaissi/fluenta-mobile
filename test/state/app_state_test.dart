@@ -33,7 +33,7 @@ void main() {
     final app = AppState()..bind(auth);
     var rebuilds = 0;
     app.addListener(() => rebuilds++);
-    await auth.login('t@e.com');
+    await auth.login('t@e.com', 'yalla-demo');
     expect(app.user.name, 'Test Learner');
     expect(app.effectivePlan, PlanTier.free);
     expect(rebuilds, greaterThan(0));
