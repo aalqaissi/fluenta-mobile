@@ -2,22 +2,26 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../mock/data.dart';
+import '../../models/models.dart';
 import '../../services/mock_api.dart';
 import '../../theme/app_colors.dart';
 import '../../utils/format.dart';
 import '../../widgets/grading_overlay.dart';
 import '../../widgets/ui.dart';
+import 'visual_prompt.dart';
 
 class WritingEditorScreen extends StatefulWidget {
   final String taskId;
-  const WritingEditorScreen({super.key, required this.taskId});
+  final WritingTask? task;
+  const WritingEditorScreen({super.key, required this.taskId, this.task});
   @override
   State<WritingEditorScreen> createState() => _WritingEditorScreenState();
 }
 
 class _WritingEditorScreenState extends State<WritingEditorScreen> {
-  late final task = writingTasks.firstWhere((t) => t.id == widget.taskId, orElse: () => writingTasks.first);
-  late final _controller = TextEditingController(text: sampleWritingResult.answer);
+  late final WritingTask task =
+      widget.task ?? writingTasks.firstWhere((t) => t.id == widget.taskId, orElse: () => writingTasks.first);
+  final _controller = TextEditingController();
   late int _timeLeft = task.durationSec;
   Timer? _timer;
 
@@ -91,8 +95,22 @@ class _WritingEditorScreenState extends State<WritingEditorScreen> {
                     Text(task.prompt, style: const TextStyle(fontSize: 15, height: 1.5, fontWeight: FontWeight.w500)),
                     const SizedBox(height: 6),
                     Text('Write at least ${task.minWords} words.', style: const TextStyle(fontSize: 12, color: AppColors.mutedForeground)),
+                    if (task.bullets != null && task.bullets!.isNotEmpty) ...[
+                      const SizedBox(height: 8),
+                      ...task.bullets!.map((b) => Padding(
+                            padding: const EdgeInsets.only(top: 2),
+                            child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                              const Text('•  ', style: TextStyle(fontSize: 14)),
+                              Expanded(child: Text(b, style: const TextStyle(fontSize: 14, height: 1.4))),
+                            ]),
+                          )),
+                    ],
                   ]),
                 ),
+                if (task.visual != null) ...[
+                  const SizedBox(height: 14),
+                  VisualPrompt(visual: task.visual),
+                ],
                 const SizedBox(height: 14),
                 TextField(
                   controller: _controller,
