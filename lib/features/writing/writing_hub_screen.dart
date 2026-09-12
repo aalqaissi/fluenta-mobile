@@ -3,7 +3,6 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../mock/data.dart';
 import '../../models/models.dart';
-import '../../services/api_client.dart';
 import '../../services/writing_convert.dart';
 import '../../state/app_state.dart';
 import '../../state/auth_state.dart';
@@ -34,7 +33,7 @@ class _WritingHubScreenState extends State<WritingHubScreen> {
         tasks.addAll(writingTasksFromContent(e.id, e.content));
       }
       if (mounted) setState(() { _authored = tasks; _loading = false; });
-    } on ApiException {
+    } catch (_) {
       if (mounted) setState(() { _authored = const []; _loading = false; }); // samples still show
     }
   }
