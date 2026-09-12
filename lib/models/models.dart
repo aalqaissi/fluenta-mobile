@@ -120,6 +120,7 @@ class FluentaUser {
   final String? level;
   final bool onboarded;
   final Streak streak;
+  final String role;
 
   const FluentaUser({
     this.id = '',
@@ -139,6 +140,7 @@ class FluentaUser {
     this.level,
     this.onboarded = false,
     required this.streak,
+    this.role = 'student',
   });
 
   factory FluentaUser.fromJson(Map<String, dynamic> json) {
@@ -168,6 +170,7 @@ class FluentaUser {
       streak: json['streak'] is Map
           ? Streak.fromJson(Map<String, dynamic>.from(json['streak'] as Map))
           : const Streak(current: 0, best: 0, last30: []),
+      role: (json['role'] as String?) ?? 'student',
     );
   }
 
@@ -202,6 +205,7 @@ class FluentaUser {
     String? purpose,
     String? level,
     bool? onboarded,
+    String? role,
   }) {
     return FluentaUser(
       id: id,
@@ -221,6 +225,7 @@ class FluentaUser {
       level: level ?? this.level,
       onboarded: onboarded ?? this.onboarded,
       streak: streak,
+      role: role ?? this.role,
     );
   }
 

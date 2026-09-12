@@ -18,6 +18,7 @@ _Last updated 2026-09-12._
 - ☑ Achievements, Certificates, Feedback (submit + list), Track switcher.
 - ☑ Settings (Server URL, privacy, sign out); Android APK builds + connects over WiFi.
 - ☑ **Real auth (password + registration)** — login and register now hit the real backend endpoints (BCrypt-verified password, generic error on failure); a "Fill demo credentials" button on the login screen fills the seeded demo account.
+- ☑ **Roles / admin gating** — `FluentaUser` now carries a `role` (student|admin) from the backend; enforcement lives on web/backend (admin surface + authoring mutations require admin). Mobile has no admin UI, so the field is just mirrored for parity.
 - ☑ **Writing runner wired to backend** — the hub fetches **published** writing exams (`GET /api/exams?skill=writing&status=published`), converts their Studio content via a Dart port of `studioWritingToExam`, and lists them alongside the built-in samples; the editor renders the Academic Task 1 visual prompt. Grading stays AI-held (sample result). _The seed `seed-w1` is a draft, so the "From your Content Studio" section is empty until a writing exam is published._
 
 ## Mobile-specific — next up
@@ -42,7 +43,6 @@ _Last updated 2026-09-12._
 | | ☐ | **Password reset / forgot-password** | Needs email delivery (no transactional email sender wired up yet). |
 | | ☐ | **Email verification flow** | Sending + confirming a verification email; once live, login can gate on it. |
 | | ☐ | **Google / OAuth sign-in** | Real password auth is done; social sign-in is a separate follow-up. |
-| | ☐ | **Roles / admin gating** | Lock down the admin surface (incl. the web admin Users page) behind real roles/permissions. |
 
 ## Release / distribution (before a public launch)
 
