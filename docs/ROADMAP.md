@@ -17,6 +17,7 @@ _Last updated 2026-09-12._
 - ☑ **Full Exam** — orchestrator (Listening + Reading scored back-to-back) → combined band + CEFR + generated certificate.
 - ☑ Achievements, Certificates, Feedback (submit + list), Track switcher.
 - ☑ Settings (Server URL, privacy, sign out); Android APK builds + connects over WiFi.
+- ☑ **Real auth (password + registration)** — login and register now hit the real backend endpoints (BCrypt-verified password, generic error on failure); a "Fill demo credentials" button on the login screen fills the seeded demo account.
 
 ## Mobile-specific — next up
 
@@ -38,7 +39,10 @@ _Last updated 2026-09-12._
 | | ☐ | **Vocabulary & Grammar practice** | Dashboard-tracked only; runners "coming soon" (parity with web). |
 | | ☐ | **Other tracks** (General / Business English, TOEFL, PTE, Kids) | Switcher shows them; content not built. |
 | | ☐ | **Real payments / checkout** | Checkout is a demo. |
-| | ☐ | **Real auth** (password + registration) | Login is prototype: any email → user. |
+| | ☐ | **Password reset / forgot-password** | Needs email delivery (no transactional email sender wired up yet). |
+| | ☐ | **Email verification flow** | Sending + confirming a verification email; once live, login can gate on it. |
+| | ☐ | **Google / OAuth sign-in** | Real password auth is done; social sign-in is a separate follow-up. |
+| | ☐ | **Roles / admin gating** | Lock down the admin surface (incl. the web admin Users page) behind real roles/permissions. |
 
 ## Release / distribution (before a public launch)
 
