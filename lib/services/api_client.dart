@@ -56,8 +56,17 @@ class ApiClient {
     return decode(jsonDecode(res.body));
   }
 
-  Future<({String token, FluentaUser user})> login(String email) =>
-      _request('POST', '/auth/login', body: {'email': email}, decode: (json) {
+  Future<({String token, FluentaUser user})> login(String email, String password) =>
+      _request('POST', '/auth/login', body: {'email': email, 'password': password}, decode: (json) {
+        final map = json as Map<String, dynamic>;
+        return (
+          token: map['token'] as String,
+          user: FluentaUser.fromJson(map['user'] as Map<String, dynamic>),
+        );
+      });
+
+  Future<({String token, FluentaUser user})> register(String email, String password, String name) =>
+      _request('POST', '/auth/register', body: {'email': email, 'password': password, 'name': name}, decode: (json) {
         final map = json as Map<String, dynamic>;
         return (
           token: map['token'] as String,

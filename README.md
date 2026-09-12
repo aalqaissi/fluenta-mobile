@@ -35,6 +35,10 @@ flutter pub get
 Point the app at your backend by editing **Server URL** in-app (default
 `http://localhost:8080/api`).
 
+**Demo account** — email `sara.hamzeh@example.com`, password `yalla-demo` (override on the backend
+via the `FLUENTA_DEMO_PASSWORD` env var). Tap **"Fill demo credentials"** on the login screen to
+fill both fields automatically.
+
 ### Physical Android phone (primary demo) over WiFi
 
 **1. Build the APK** (always use the full clean sequence — it avoids stale-cache build
@@ -134,5 +138,6 @@ tools/mock-api/    Node stub API (local verification)
 docs/superpowers/  design spec + phase plans
 ```
 
-> Prototype: login is any-email (no password), payments/audio capture are simulated, and AI is
-> held. See `docs/superpowers/specs/2026-09-11-yalla-mobile-parity-design.md`.
+> Real password auth (register + login) now backs the app. Still prototype/held: password reset,
+> email verification gating, OAuth sign-in, payments/audio capture are simulated, and AI is held.
+> See `docs/superpowers/specs/2026-09-11-yalla-mobile-parity-design.md`.

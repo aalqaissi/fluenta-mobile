@@ -30,6 +30,8 @@ void main() {
       child: const MaterialApp(home: LoginScreen()),
     ));
     await tester.enterText(find.byKey(const Key('login-email')), 's@e.com');
+    await tester.enterText(find.byKey(const Key('login-password')), 'yalla-demo');
+    await tester.ensureVisible(find.byKey(const Key('login-submit')));
     await tester.tap(find.byKey(const Key('login-submit')));
     await tester.pumpAndSettle();
     expect(config.token, 'tk');
