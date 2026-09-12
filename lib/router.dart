@@ -30,6 +30,7 @@ import 'features/checkout/checkout_screen.dart';
 import 'features/settings/settings_screen.dart';
 import 'features/help/help_screen.dart';
 import 'features/auth/login_screen.dart';
+import 'models/models.dart';
 
 final _rootKey = GlobalKey<NavigatorState>();
 
@@ -99,7 +100,10 @@ GoRouter buildRouter(AuthState auth) {
               examId: s.uri.queryParameters['id'],
               full: s.uri.queryParameters['full'] == '1')),
       GoRoute(path: '/results/reading', builder: (c, s) => const ReadingResultsScreen()),
-      GoRoute(path: '/exam/writing/:id', builder: (c, s) => WritingEditorScreen(taskId: s.pathParameters['id']!)),
+      GoRoute(
+          path: '/exam/writing/:id',
+          builder: (c, s) => WritingEditorScreen(
+              taskId: s.pathParameters['id']!, task: s.extra as WritingTask?)),
       GoRoute(path: '/results/writing/:id', builder: (c, s) => const WritingResultsScreen()),
     ],
   );

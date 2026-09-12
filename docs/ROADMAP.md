@@ -18,13 +18,13 @@ _Last updated 2026-09-12._
 - ☑ Achievements, Certificates, Feedback (submit + list), Track switcher.
 - ☑ Settings (Server URL, privacy, sign out); Android APK builds + connects over WiFi.
 - ☑ **Real auth (password + registration)** — login and register now hit the real backend endpoints (BCrypt-verified password, generic error on failure); a "Fill demo credentials" button on the login screen fills the seeded demo account.
+- ☑ **Writing runner wired to backend** — the hub fetches **published** writing exams (`GET /api/exams?skill=writing&status=published`), converts their Studio content via a Dart port of `studioWritingToExam`, and lists them alongside the built-in samples; the editor renders the Academic Task 1 visual prompt. Grading stays AI-held (sample result). _The seed `seed-w1` is a draft, so the "From your Content Studio" section is empty until a writing exam is published._
 
 ## Mobile-specific — next up
 
 | Pri | Status | Item | Notes |
 |----|----|----|----|
 |  | ☐ | **Real audio for Speaking prompts** | Listening real audio is done (see above). Speaking prompts stay text-only for now; adding examiner-voice audio reuses the same media pipeline (`POST /api/media` + `audioUrl`) but needs audio fields on the speaking model + Studio speaking editor. |
-| | ☐ | **Writing runner** wired to backend | Backend serves no runner-format writing exam yet (only a `seed-w1` studio draft). Needs a studio→runtime converter (like the web's `studioWritingToExam`) + hook into the editor. Grading stays AI-held. |
 | | ☐ | **Lessons** from the API | Currently local seed; wire to `GET /api/lessons`. |
 | | ☐ | **Mobile polish** | Practice-by-Skill card proportions, empty/error states, larger-text/accessibility pass, optional dark mode. |
 
