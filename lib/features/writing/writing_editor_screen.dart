@@ -1,12 +1,13 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 import '../../mock/data.dart';
 import '../../models/models.dart';
 import '../../services/mock_api.dart';
+import '../../state/auth_state.dart';
 import '../../theme/app_colors.dart';
 import '../../utils/format.dart';
-import '../../widgets/grading_overlay.dart';
 import '../../widgets/ui.dart';
 import 'visual_prompt.dart';
 
@@ -42,9 +43,42 @@ class _WritingEditorScreenState extends State<WritingEditorScreen> {
 
   Future<void> _submit() async {
     _timer?.cancel();
-    AttemptStore.lastWriting = WritingAttempt(taskId: task.id, answer: _controller.text, wordCount: _words);
-    await showGradingDialog(context);
-    if (mounted) context.go('/results/writing/${task.id}');
+    final api = context.read<AuthState>().api;
+    final essay = _controller.text;
+    final words = _words;
+    AttemptStore.lastWriting = WritingAttempt(taskId: task.id, answer: essay, wordCount: words);
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const AlertDialog(
+        content: Row(children: [
+          SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2.5)),
+          SizedBox(width: 16),
+          Expanded(child: Text('Reviewing your essay…')),
+        ]),
+      ),
+    );
+
+    WritingResult? result;
+    try {
+      result = await api.writingFeedback(
+        taskId: task.id,
+        taskNumber: task.taskNumber,
+        kind: task.kind,
+        module: task.module ?? 'both',
+        prompt: task.prompt,
+        minWords: task.minWords,
+        essay: essay,
+      );
+    } catch (_) {
+      result = null; // results screen falls back to sampleWritingResult
+    }
+    if (!mounted) return;
+    Navigator.of(context).pop(); // dismiss the loader
+    AttemptStore.lastWriting =
+        WritingAttempt(taskId: task.id, answer: essay, wordCount: words, result: result);
+    context.go('/results/writing/${task.id}');
   }
 
   @override

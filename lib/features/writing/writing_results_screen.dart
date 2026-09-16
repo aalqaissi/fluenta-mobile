@@ -22,7 +22,7 @@ class WritingResultsScreen extends StatefulWidget {
 }
 
 class _WritingResultsScreenState extends State<WritingResultsScreen> {
-  final result = sampleWritingResult;
+  WritingResult get result => AttemptStore.lastWriting?.result ?? sampleWritingResult;
   bool _feedback = true;
   WritingCriterionKey _crit = WritingCriterionKey.task;
 
