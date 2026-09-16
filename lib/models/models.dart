@@ -685,6 +685,19 @@ class WritingTask {
 
 enum WritingCriterionKey { task, coherence, lexical, grammar }
 
+WritingCriterionKey writingCriterionKeyFromString(String? s) {
+  switch (s) {
+    case 'coherence':
+      return WritingCriterionKey.coherence;
+    case 'lexical':
+      return WritingCriterionKey.lexical;
+    case 'grammar':
+      return WritingCriterionKey.grammar;
+    default:
+      return WritingCriterionKey.task;
+  }
+}
+
 class WritingCriterion {
   final WritingCriterionKey key;
   final String label;
@@ -713,6 +726,27 @@ class WritingResult {
     required this.criteria,
     required this.annotations,
   });
+
+  factory WritingResult.fromJson(Map<String, dynamic> j) => WritingResult(
+        overall: (j['overall'] as num?)?.toDouble() ?? 0,
+        wordCount: (j['wordCount'] as num?)?.toInt() ?? 0,
+        answer: (j['answer'] as String?) ?? '',
+        criteria: ((j['criteria'] as List?) ?? const [])
+            .map((c) => WritingCriterion(
+                  writingCriterionKeyFromString(c['key'] as String?),
+                  (c['label'] as String?) ?? '',
+                  (c['band'] as num?)?.toDouble() ?? 0,
+                  (c['summary'] as String?) ?? '',
+                ))
+            .toList(),
+        annotations: ((j['annotations'] as List?) ?? const [])
+            .map((a) => WritingAnnotation(
+                  writingCriterionKeyFromString(a['criterion'] as String?),
+                  (a['quote'] as String?) ?? '',
+                  (a['note'] as String?) ?? '',
+                ))
+            .toList(),
+      );
 }
 
 // ---- Listening / Speaking ----
