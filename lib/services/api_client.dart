@@ -115,18 +115,20 @@ class ApiClient {
     required String prompt,
     required int minWords,
     required String essay,
-  }) =>
-      _request('POST', '/ai/writing-feedback',
-          body: {
-            if (taskId != null) 'taskId': taskId,
-            'taskNumber': taskNumber,
-            'kind': kind,
-            'module': module,
-            'prompt': prompt,
-            'minWords': minWords,
-            'essay': essay,
-          },
-          decode: (json) => WritingResult.fromJson(json as Map<String, dynamic>));
+  }) {
+    final body = <String, dynamic>{
+      'taskNumber': taskNumber,
+      'kind': kind,
+      'module': module,
+      'prompt': prompt,
+      'minWords': minWords,
+      'essay': essay,
+    };
+    if (taskId != null) body['taskId'] = taskId;
+    return _request('POST', '/ai/writing-feedback',
+        body: body,
+        decode: (json) => WritingResult.fromJson(json as Map<String, dynamic>));
+  }
 
   Future<AttemptDto> getAttempt(String id) => _request('GET', '/attempts/$id',
       decode: (json) => AttemptDto.fromJson(json as Map<String, dynamic>));
