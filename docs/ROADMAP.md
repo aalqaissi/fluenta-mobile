@@ -33,7 +33,7 @@ _Last updated 2026-09-12._
 
 | Pri | Status | Item | Notes |
 |----|----|----|----|
-| | ☐ | **AI: Coach chat** | Held; input disabled, `/api/ai/coach` → 501. Needs LLM integration. |
+| | ☑ | **AI: Coach chat** | Live with request/response, server-sourced personalization, offline fallback, ephemeral. |
 | | ☑ | **AI: Writing feedback** (band + criteria + annotations) | Live with offline fallback + toggleable persistence. |
 | | ☐ | **AI: Speaking feedback** (band + 4 criteria) | Held; enables scored Speaking + full-exam Speaking band. |
 | | ☐ | **AI: Live Interview** (real-time examiner) | Held; shows "coming soon". |
