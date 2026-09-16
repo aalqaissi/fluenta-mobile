@@ -22,7 +22,10 @@ class WritingResultsScreen extends StatefulWidget {
 }
 
 class _WritingResultsScreenState extends State<WritingResultsScreen> {
-  WritingResult get result => AttemptStore.lastWriting?.result ?? sampleWritingResult;
+  WritingResult get result {
+    final r = AttemptStore.lastWriting?.result;
+    return (r != null && r.criteria.isNotEmpty) ? r : sampleWritingResult;
+  }
   bool _feedback = true;
   WritingCriterionKey _crit = WritingCriterionKey.task;
 
@@ -31,7 +34,7 @@ class _WritingResultsScreenState extends State<WritingResultsScreen> {
     final written = AttemptStore.lastWriting;
     final answer = (written != null && written.answer.trim().isNotEmpty) ? written.answer : result.answer;
     final wordCount = written?.wordCount ?? result.wordCount;
-    final critMeta = result.criteria.firstWhere((c) => c.key == _crit);
+    final critMeta = result.criteria.firstWhere((c) => c.key == _crit, orElse: () => result.criteria.first);
     final notes = result.annotations.where((a) => a.criterion == _crit).toList();
 
     return Scaffold(
