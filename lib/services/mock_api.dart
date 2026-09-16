@@ -21,7 +21,8 @@ class WritingAttempt {
   final String taskId;
   final String answer;
   final int wordCount;
-  const WritingAttempt({required this.taskId, required this.answer, required this.wordCount});
+  final WritingResult? result;
+  WritingAttempt({required this.taskId, required this.answer, required this.wordCount, this.result});
 }
 
 class GradingStep {
