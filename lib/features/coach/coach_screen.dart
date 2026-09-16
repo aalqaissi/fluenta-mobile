@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../config/brand.dart';
 import '../../mock/data.dart';
 import '../../models/models.dart';
+import '../../state/auth_state.dart';
 import '../../theme/app_colors.dart';
 
 class CoachScreen extends StatefulWidget {
@@ -14,13 +16,45 @@ class _CoachScreenState extends State<CoachScreen> {
   final List<CoachMessage> _messages = List.of(initialCoachMessages);
   final _controller = TextEditingController();
   final _scroll = ScrollController();
-  final bool _typing = false;
+  bool _typing = false;
 
   @override
   void dispose() {
     _controller.dispose();
     _scroll.dispose();
     super.dispose();
+  }
+
+  Future<void> _send() async {
+    final text = _controller.text.trim();
+    if (text.isEmpty || _typing) return;
+    _controller.clear();
+    setState(() {
+      _messages.add(CoachMessage('user', text));
+      _typing = true;
+    });
+    _scrollToEnd();
+    String reply;
+    try {
+      reply = await context.read<AuthState>().api.coach(_messages);
+    } catch (_) {
+      reply = "I couldn't reach the coach just now — please try again in a moment.";
+    }
+    if (!mounted) return;
+    setState(() {
+      _typing = false;
+      _messages.add(CoachMessage('coach', reply));
+    });
+    _scrollToEnd();
+  }
+
+  void _scrollToEnd() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scroll.hasClients) {
+        _scroll.animateTo(_scroll.position.maxScrollExtent,
+            duration: const Duration(milliseconds: 250), curve: Curves.easeOut);
+      }
+    });
   }
 
   @override
@@ -42,7 +76,7 @@ class _CoachScreenState extends State<CoachScreen> {
               SizedBox(width: 10),
               Expanded(
                 child: Text(
-                    '${Brand.coachName} is coming soon — real-time AI coaching on your results is on the way.',
+                    'Ask ${Brand.coachName} about your feedback, drills, or a study plan.',
                     style: TextStyle(fontSize: 12.5)),
               ),
             ]),
@@ -130,14 +164,15 @@ class _CoachScreenState extends State<CoachScreen> {
           Expanded(
             child: TextField(
               controller: _controller,
-              enabled: false, // AI held
-              decoration: const InputDecoration(hintText: 'Chat coming soon…'),
+              textInputAction: TextInputAction.send,
+              onSubmitted: (_) => _send(),
+              decoration: InputDecoration(hintText: 'Message ${Brand.coachName}…'),
             ),
           ),
           const SizedBox(width: 8),
           FilledButton(
             style: FilledButton.styleFrom(minimumSize: const Size(52, 52), padding: EdgeInsets.zero, shape: const CircleBorder()),
-            onPressed: null, // AI held
+            onPressed: _send,
             child: const Icon(Icons.send_rounded, size: 20),
           ),
         ]),

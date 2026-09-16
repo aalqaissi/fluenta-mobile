@@ -130,6 +130,12 @@ class ApiClient {
         decode: (json) => WritingResult.fromJson(json as Map<String, dynamic>));
   }
 
+  Future<String> coach(List<CoachMessage> messages) => _request('POST', '/ai/coach',
+      body: {
+        'messages': messages.map((m) => {'role': m.role, 'text': m.text}).toList(),
+      },
+      decode: (json) => ((json as Map<String, dynamic>)['reply'] as String?) ?? '');
+
   Future<AttemptDto> getAttempt(String id) => _request('GET', '/attempts/$id',
       decode: (json) => AttemptDto.fromJson(json as Map<String, dynamic>));
 
