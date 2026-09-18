@@ -315,7 +315,7 @@ class _SpeakingScreenState extends State<SpeakingScreen> {
               SizedBox(
                 width: double.infinity,
                 child: FilledButton.icon(
-                  onPressed: (_clips.isEmpty || _submitting) ? null : _submit,
+                  onPressed: (_clips.length != _parts.length || _submitting) ? null : _submit,
                   icon: _submitting
                       ? const SizedBox(
                           width: 18,
@@ -326,6 +326,11 @@ class _SpeakingScreenState extends State<SpeakingScreen> {
                   label: Text(_submitting ? 'Submitting…' : 'Submit for AI feedback'),
                 ),
               ),
+              if (_clips.length != _parts.length && !_submitting) ...[
+                const SizedBox(height: 8),
+                Text('Record all ${_parts.length} parts to get AI feedback.',
+                    style: const TextStyle(fontSize: 11.5, color: AppColors.mutedForeground)),
+              ],
             ]),
           ),
           if (_result != null) ...[
