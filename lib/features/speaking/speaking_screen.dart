@@ -1,6 +1,10 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
+import 'package:record/record.dart';
+import 'package:path_provider/path_provider.dart';
 import '../../mock/data.dart';
 import '../../models/models.dart';
 import '../../services/exam_convert.dart';
@@ -23,6 +27,11 @@ class _SpeakingScreenState extends State<SpeakingScreen> {
   int _elapsed = 0;
   Timer? _timer;
   List<SpeakingPart> _parts = speakingParts; // local fallback until API loads
+
+  final _rec = AudioRecorder();
+  final Map<int, String> _clips = {}; // part index -> recorded file path
+  bool _submitting = false;
+  SpeakingResult? _result;
 
   @override
   void initState() {
@@ -47,18 +56,52 @@ class _SpeakingScreenState extends State<SpeakingScreen> {
     }
   }
 
-  void _toggle() {
+  Future<void> _toggle() async {
     if (_recording) {
-      _timer?.cancel();
+      final path = await _rec.stop();
       setState(() {
         _recording = false;
         _done = true;
+        if (path != null) _clips[_part] = path;
       });
-    } else {
-      setState(() => _recording = true);
-      _timer = Timer.periodic(const Duration(seconds: 1), (_) => setState(() => _elapsed++));
+      return;
+    }
+    if (!await Permission.microphone.request().isGranted) {
+      if (mounted) showToast(context, 'Microphone permission is needed to record.');
+      return;
+    }
+    final dir = await getTemporaryDirectory();
+    final file = '${dir.path}/speaking_${_part}_${DateTime.now().millisecondsSinceEpoch}.m4a';
+    await _rec.start(const RecordConfig(encoder: AudioEncoder.aacLc), path: file);
+    setState(() {
+      _recording = true;
+      _elapsed = 0;
+    });
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) => setState(() => _elapsed++));
+  }
+
+  Future<void> _submit() async {
+    setState(() => _submitting = true);
+    try {
+      final api = context.read<AuthState>().api;
+      final parts = <Map<String, dynamic>>[];
+      for (var i = 0; i < _parts.length; i++) {
+        final path = _clips[i];
+        if (path == null) throw Exception('missing recording');
+        final url = await api.uploadMedia(File(path));
+        parts.add({'number': _parts[i].number, 'prompt': _promptFor(_parts[i]), 'audioUrl': url});
+      }
+      final res = await api.speakingFeedback(examId: 'speaking', parts: parts);
+      if (mounted) setState(() => _result = res);
+    } catch (_) {
+      if (mounted) showToast(context, 'AI feedback is unavailable right now. Please try again.');
+    } finally {
+      if (mounted) setState(() => _submitting = false);
     }
   }
+
+  String _promptFor(SpeakingPart p) =>
+      p.cueCard != null ? [p.cueCard!, ...(p.bullets ?? const [])].join(' • ') : p.questions.join(' ');
 
   void _reset() {
     _timer?.cancel();
@@ -72,6 +115,7 @@ class _SpeakingScreenState extends State<SpeakingScreen> {
   @override
   void dispose() {
     _timer?.cancel();
+    _rec.dispose();
     super.dispose();
   }
 
@@ -224,7 +268,8 @@ class _SpeakingScreenState extends State<SpeakingScreen> {
                   style: const TextStyle(fontWeight: FontWeight.w700)),
               if (_done)
                 TextButton.icon(onPressed: _reset, icon: const Icon(Icons.refresh_rounded, size: 16), label: const Text('Re-record')),
-              const Text('Microphone is simulated in this preview.', style: TextStyle(fontSize: 11.5, color: AppColors.mutedForeground)),
+              const Text('Your answer is recorded on this device and uploaded when you submit.',
+                  style: TextStyle(fontSize: 11.5, color: AppColors.mutedForeground)),
             ]),
           ),
           const SizedBox(height: 14),
@@ -234,24 +279,68 @@ class _SpeakingScreenState extends State<SpeakingScreen> {
                 Icon(Icons.auto_awesome, color: AppColors.primary, size: 18),
                 SizedBox(width: 6),
                 Text('AI feedback', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15.5)),
-                Spacer(),
-                PillBadge('Soon', color: AppColors.mutedForeground),
               ]),
               const SizedBox(height: 8),
               const Text(
-                  'Band estimates and per-criterion coaching for Speaking are coming soon. Record your answer to keep practising in the meantime.',
+                  'Record each part, then submit for band estimates and per-criterion coaching on your speaking.',
                   style: TextStyle(color: AppColors.mutedForeground, fontSize: 13)),
               const SizedBox(height: 12),
               SizedBox(
                 width: double.infinity,
                 child: FilledButton.icon(
-                  onPressed: null, // AI held
-                  icon: const Icon(Icons.send_rounded, size: 18),
-                  label: const Text('Submit for AI feedback'),
+                  onPressed: (_clips.isEmpty || _submitting) ? null : _submit,
+                  icon: _submitting
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        )
+                      : const Icon(Icons.send_rounded, size: 18),
+                  label: Text(_submitting ? 'Submitting…' : 'Submit for AI feedback'),
                 ),
               ),
             ]),
           ),
+          if (_result != null) ...[
+            const SizedBox(height: 14),
+            FluentaCard(
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Row(children: [
+                  ProgressRing(value: _result!.overall / 9, size: 92, stroke: 10, label: formatBand(_result!.overall), sublabel: 'overall'),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      const PillBadge('AI feedback', color: AppColors.info, icon: Icons.auto_awesome),
+                      const SizedBox(height: 6),
+                      const Text('Your speaking, reviewed', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
+                      Text('Scored across ${_result!.criteria.length} criteria.',
+                          style: const TextStyle(color: AppColors.mutedForeground, fontSize: 13)),
+                    ]),
+                  ),
+                ]),
+                const SizedBox(height: 14),
+                ..._result!.criteria.map((c) => Container(
+                      margin: const EdgeInsets.only(bottom: 10),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(border: Border.all(color: AppColors.border), borderRadius: BorderRadius.circular(12)),
+                      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                        Row(children: [
+                          Expanded(child: Text(c.label, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14))),
+                          Text(formatBand(c.band),
+                              style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: AppColors.bandTone(c.band))),
+                        ]),
+                        const SizedBox(height: 6),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(999),
+                          child: LinearProgressIndicator(value: c.band / 9, minHeight: 5, color: AppColors.bandTone(c.band)),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(c.note, style: const TextStyle(fontSize: 13.5, color: AppColors.mutedForeground)),
+                      ]),
+                    )),
+              ]),
+            ),
+          ],
         ],
       ),
     );

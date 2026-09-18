@@ -3,6 +3,7 @@
          these automatically — only debug does). usesCleartextTraffic allows the
          plain-http LAN backend used for the demo. -->
     <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <application
         android:label="Yalla English Hub"
         android:name="${applicationName}"
