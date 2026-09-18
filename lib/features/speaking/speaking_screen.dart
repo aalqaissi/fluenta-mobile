@@ -23,7 +23,6 @@ class SpeakingScreen extends StatefulWidget {
 class _SpeakingScreenState extends State<SpeakingScreen> {
   int _part = 0;
   bool _recording = false;
-  bool _done = false;
   int _elapsed = 0;
   Timer? _timer;
   List<SpeakingPart> _parts = speakingParts; // local fallback until API loads
@@ -58,26 +57,57 @@ class _SpeakingScreenState extends State<SpeakingScreen> {
 
   Future<void> _toggle() async {
     if (_recording) {
-      final path = await _rec.stop();
-      setState(() {
-        _recording = false;
-        _done = true;
-        if (path != null) _clips[_part] = path;
-      });
+      try {
+        final path = await _rec.stop();
+        if (!mounted) return;
+        setState(() {
+          _recording = false;
+          if (path != null) _clips[_part] = path;
+        });
+      } catch (_) {
+        _timer?.cancel();
+        if (!mounted) return;
+        setState(() => _recording = false);
+        showToast(context, 'Recording failed. Please try again.');
+      }
       return;
     }
     if (!await Permission.microphone.request().isGranted) {
       if (mounted) showToast(context, 'Microphone permission is needed to record.');
       return;
     }
-    final dir = await getTemporaryDirectory();
-    final file = '${dir.path}/speaking_${_part}_${DateTime.now().millisecondsSinceEpoch}.m4a';
-    await _rec.start(const RecordConfig(encoder: AudioEncoder.aacLc), path: file);
-    setState(() {
-      _recording = true;
-      _elapsed = 0;
-    });
-    _timer = Timer.periodic(const Duration(seconds: 1), (_) => setState(() => _elapsed++));
+    try {
+      final dir = await getTemporaryDirectory();
+      final file = '${dir.path}/speaking_${_part}_${DateTime.now().millisecondsSinceEpoch}.m4a';
+      await _rec.start(const RecordConfig(encoder: AudioEncoder.aacLc), path: file);
+      if (!mounted) return;
+      setState(() {
+        _recording = true;
+        _elapsed = 0;
+      });
+      _timer = Timer.periodic(const Duration(seconds: 1), (_) => setState(() => _elapsed++));
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _recording = false);
+      showToast(context, 'Recording failed. Please try again.');
+    }
+  }
+
+  /// Stops any in-progress recording (storing the take so it isn't lost)
+  /// before switching the active part — otherwise the native recorder keeps
+  /// running against the old part's temp file after the UI moves on.
+  Future<void> _selectPart(int index) async {
+    if (_recording) {
+      try {
+        final path = await _rec.stop();
+        if (path != null) _clips[_part] = path;
+      } catch (_) {
+        /* best effort: still switch parts even if stop() failed */
+      }
+    }
+    if (!mounted) return;
+    setState(() => _part = index);
+    _reset();
   }
 
   Future<void> _submit() async {
@@ -107,7 +137,6 @@ class _SpeakingScreenState extends State<SpeakingScreen> {
     _timer?.cancel();
     setState(() {
       _recording = false;
-      _done = false;
       _elapsed = 0;
     });
   }
@@ -123,6 +152,7 @@ class _SpeakingScreenState extends State<SpeakingScreen> {
   Widget build(BuildContext context) {
     final locked = context.watch<AppState>().isLocked('speaking');
     final part = _parts[_part];
+    final hasClip = _clips.containsKey(_part);
     return Scaffold(
       appBar: AppBar(title: const Text('Speaking practice')),
       body: ListView(
@@ -189,10 +219,7 @@ class _SpeakingScreenState extends State<SpeakingScreen> {
                   padding: const EdgeInsets.only(right: 8),
                   child: InkWell(
                     borderRadius: BorderRadius.circular(12),
-                    onTap: () {
-                      setState(() => _part = e.key);
-                      _reset();
-                    },
+                    onTap: () => _selectPart(e.key),
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                       decoration: BoxDecoration(
@@ -264,9 +291,9 @@ class _SpeakingScreenState extends State<SpeakingScreen> {
                 ),
               ),
               const SizedBox(height: 10),
-              Text('${_recording ? 'Recording…' : _done ? 'Recorded' : 'Tap to record'} · ${pad2(_elapsed ~/ 60)}:${pad2(_elapsed % 60)}',
+              Text('${_recording ? 'Recording…' : hasClip ? 'Recorded' : 'Tap to record'} · ${pad2(_elapsed ~/ 60)}:${pad2(_elapsed % 60)}',
                   style: const TextStyle(fontWeight: FontWeight.w700)),
-              if (_done)
+              if (hasClip)
                 TextButton.icon(onPressed: _reset, icon: const Icon(Icons.refresh_rounded, size: 16), label: const Text('Re-record')),
               const Text('Your answer is recorded on this device and uploaded when you submit.',
                   style: TextStyle(fontSize: 11.5, color: AppColors.mutedForeground)),
