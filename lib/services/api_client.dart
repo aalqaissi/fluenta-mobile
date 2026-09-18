@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:http/http.dart' as http;
 import '../config/app_config.dart';
 import '../models/models.dart';
@@ -167,4 +168,36 @@ class ApiClient {
       decode: (json) => (json as List)
           .map((e) => FeedbackDto.fromJson(Map<String, dynamic>.from(e as Map)))
           .toList());
+
+  Future<String> uploadMedia(File file) async {
+    final uri = Uri.parse('${config.serverUrl}/media');
+    http.Response res;
+    try {
+      final req = http.MultipartRequest('POST', uri);
+      final token = config.token;
+      if (token != null) req.headers['Authorization'] = 'Bearer $token';
+      req.files.add(await http.MultipartFile.fromPath('file', file.path));
+      res = await http.Response.fromStream(await _http.send(req));
+    } catch (_) {
+      throw ApiException(0,
+          "Can't reach the Yalla English Hub API at ${config.serverUrl}. Is the backend running?");
+    }
+    if (res.statusCode >= 400) {
+      var msg = 'Upload failed (${res.statusCode})';
+      try {
+        final data = jsonDecode(res.body);
+        if (data is Map && data['error'] is String) msg = data['error'] as String;
+      } catch (_) {/* keep default */}
+      throw ApiException(res.statusCode, msg);
+    }
+    return (jsonDecode(res.body) as Map<String, dynamic>)['url'] as String;
+  }
+
+  Future<SpeakingResult> speakingFeedback({
+    required String examId,
+    required List<Map<String, dynamic>> parts,
+  }) =>
+      _request('POST', '/ai/speaking-feedback',
+          body: {'examId': examId, 'parts': parts},
+          decode: (json) => SpeakingResult.fromJson(json as Map<String, dynamic>));
 }

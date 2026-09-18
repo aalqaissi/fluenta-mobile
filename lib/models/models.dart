@@ -809,6 +809,36 @@ class SpeakingFeedback {
   const SpeakingFeedback(this.label, this.band, this.note);
 }
 
+class SpeakingCriterion {
+  final String key;
+  final String label;
+  final double band;
+  final String note;
+  SpeakingCriterion({required this.key, required this.label, required this.band, required this.note});
+  factory SpeakingCriterion.fromJson(Map<String, dynamic> j) => SpeakingCriterion(
+        key: j['key'] as String? ?? '',
+        label: j['label'] as String? ?? '',
+        band: (j['band'] as num?)?.toDouble() ?? 0,
+        note: j['note'] as String? ?? '',
+      );
+}
+
+class SpeakingResult {
+  final String id;
+  final String source;
+  final double overall;
+  final List<SpeakingCriterion> criteria;
+  SpeakingResult({required this.id, required this.source, required this.overall, required this.criteria});
+  factory SpeakingResult.fromJson(Map<String, dynamic> j) => SpeakingResult(
+        id: j['id'] as String? ?? '',
+        source: j['source'] as String? ?? '',
+        overall: (j['overall'] as num?)?.toDouble() ?? 0,
+        criteria: ((j['criteria'] as List?) ?? const [])
+            .map((e) => SpeakingCriterion.fromJson(e as Map<String, dynamic>))
+            .toList(),
+      );
+}
+
 // ---- Plans / coach / lessons / achievements / certificates ----
 class Plan {
   final String id;
