@@ -1,361 +1,388 @@
-# Graph Report - D:\personal\fluenta-mobile  (2026-09-17)
+# Graph Report - fluenta-mobile  (2026-09-18)
 
 ## Corpus Check
-- 31 files · ~53,717 words
+- 92 files · ~54,476 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 1276 nodes · 1952 edges · 65 communities (62 shown, 3 thin omitted)
-- Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 11 edges (avg confidence: 0.81)
+- 1213 nodes · 1800 edges · 71 communities (67 shown, 4 thin omitted)
+- Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS
 - Token cost: 0 input · 0 output
+
+## Graph Freshness
+- Built from commit: `3078def8`
+- Run `git rev-parse HEAD` and compare to check if the graph is stale.
+- Run `graphify update .` after code changes (no API cost).
 
 ## Community Hubs (Navigation)
 - models.dart
-- package:flutter_test/flutter_test.dart
-- README.md (Mobile)
+- package:provider/provider.dart
+- Yalla English Hub — Mobile Parity Design Spec
+- Yalla English Hub — Mobile (Flutter)
 - router.dart
 - modals.dart
 - onboarding_screen.dart
 - reading_runner_screen.dart
-- ui.dart
-- Yalla English Hub Mobile Roadmap
-- app_colors.dart
 - overview_screen.dart
 - mock_api.dart
+- ui.dart
 - listening_runner_screen.dart
+- app_colors.dart
+- api_client.dart
+- Global Constraints
 - section_audio_player.dart
 - app_config.dart
-- api_client.dart
+- AppState
+- writing_hub_screen.dart
 - writing_convert.dart
+- package:flutter/material.dart
+- Mobile Writing Runner — wired to backend — Design
 - data.dart
 - AppDelegate
-- app_state.dart
+- mock_exams_screen.dart
 - server.mjs
+- coach_screen.dart
+- brand.dart
+- login_screen.dart
+- app_state.dart
 - auth_state.dart
-- AppState
 - writing_editor_screen.dart
 - speaking_screen.dart
 - reading_hub_screen.dart
-- login_screen.dart
-- ../theme/app_colors.dart
-- package:go_router/go_router.dart
 - question_group_view.dart
-- fluenta_mobile pubspec.yaml
-- Yalla Mobile P0 Foundation Plan
-- Yalla Mobile Parity Design Spec
-- coach_screen.dart
-- ../../widgets/ui.dart
+- full_exam_results_screen.dart
+- Route /
 - track_switcher.dart
 - exam_convert.dart
-- Mobile Writing Runner Implementation Pla
-- Route /
-- AuthState
-- Mobile Writing Runner Design
-- full_exam_screen.dart
-- achievements_screen.dart
-- package:flutter/material.dart
-- mock_exams_screen.dart
-- writing_hub_screen.dart
-- manifest.json
-- main.dart
 - grading_overlay.dart
+- AuthState
+- achievements_screen.dart
+- build
+- manifest.json
 - certificates_screen.dart
 - feedback_list_screen.dart
+- full_exam_screen.dart
 - listening_loader_screen.dart
-- State
 - StatelessWidget
 - reading_loader_screen.dart
 - ../models/models.dart
-- progress_screen.dart
-- Writing Runner Wired to Backend
-- FluentaUser + Streak JSON Model
+- Mobile Writing Runner (wired to backend) Implementation Plan
+- visual_prompt.dart
+- app_theme.dart
+- ../../widgets/ui.dart
 - build
-- practice_hub_screen.dart
+- CustomPainter
+- State
+- MainActivity
+- QuestionType
+- SkillKey
+- dashboard_screen.dart
+- Yalla English Hub — Mobile Roadmap
+- package:go_router/go_router.dart
+- more_screen.dart
+- Yalla mock API (env A)
+- LaunchImage.imageset/README.md
 
 ## God Nodes (most connected - your core abstractions)
-1. `AuthState` - 68 edges
-2. `README.md (Mobile)` - 49 edges
-3. `AppState` - 38 edges
-4. `Yalla English Hub Mobile Roadmap` - 34 edges
-5. `Mobile Writing Runner Implementation Plan` - 20 edges
-6. `Yalla Mobile P0 Foundation Plan` - 16 edges
-7. `Yalla Mobile Parity Design Spec` - 16 edges
-8. `Mobile Writing Runner Design` - 14 edges
-9. `fluenta_mobile pubspec.yaml` - 12 edges
-10. `build` - 10 edges
+1. `AuthState` - 74 edges
+2. `AppState` - 37 edges
+3. `Yalla English Hub — Mobile Parity Design Spec` - 12 edges
+4. `Global Constraints` - 11 edges
+5. `build` - 10 edges
+6. `Mobile Writing Runner — wired to backend — Design` - 10 edges
+7. `Mobile Writing Runner (wired to backend) Implementation Plan` - 9 edges
+8. `build` - 6 edges
+9. `Yalla English Hub — Mobile (Flutter)` - 6 edges
+10. `Yalla English Hub — Mobile Roadmap` - 6 edges
 
 ## Surprising Connections (you probably didn't know these)
-- `Login Screen Wired to API` --implements--> `LoginScreen`  [EXTRACTED]
-  docs/superpowers/plans/2026-09-11-yalla-mobile-p0-foundation.md → lib/features/auth/login_screen.dart
-- `Bootstrap Gate: Splash/Offline + Router Redirect` --implements--> `buildRouter`  [EXTRACTED]
-  docs/superpowers/plans/2026-09-11-yalla-mobile-p0-foundation.md → lib/router.dart
-- `AppState Delegates to AuthState` --implements--> `AppState`  [EXTRACTED]
-  docs/superpowers/plans/2026-09-11-yalla-mobile-p0-foundation.md → lib/state/app_state.dart
-- `AuthState + BootStatus` --implements--> `BootStatus`  [EXTRACTED]
-  docs/superpowers/plans/2026-09-11-yalla-mobile-p0-foundation.md → lib/state/auth_state.dart
-- `AuthState + BootStatus` --implements--> `AuthState`  [EXTRACTED]
-  docs/superpowers/plans/2026-09-11-yalla-mobile-p0-foundation.md → lib/state/auth_state.dart
+- `initState` --references--> `AuthState`  [EXTRACTED]
+  lib/features/achievements/achievements_screen.dart → lib/state/auth_state.dart
+- `build` --references--> `AuthState`  [EXTRACTED]
+  lib/features/achievements/achievements_screen.dart → lib/state/auth_state.dart
+- `initState` --references--> `AuthState`  [EXTRACTED]
+  lib/features/auth/login_screen.dart → lib/state/auth_state.dart
+- `_signIn` --references--> `AuthState`  [EXTRACTED]
+  lib/features/auth/login_screen.dart → lib/state/auth_state.dart
+- `initState` --references--> `AuthState`  [EXTRACTED]
+  lib/features/certificates/certificates_screen.dart → lib/state/auth_state.dart
 
 ## Import Cycles
 - None detected.
 
-## Hyperedges (group relationships)
-- **P0 Data + Auth + Bootstrap Flow** — docs_superpowers_plans_2026_09_11_yalla_mobile_p0_foundation_appconfig, docs_superpowers_plans_2026_09_11_yalla_mobile_p0_foundation_apiclient, docs_superpowers_plans_2026_09_11_yalla_mobile_p0_foundation_authstate, docs_superpowers_plans_2026_09_11_yalla_mobile_p0_foundation_bootstrap_gate [EXTRACTED 1.00]
-- **Two-Environment Verification Strategy (env A stub / env B real backend)** — docs_superpowers_specs_2026_09_11_yalla_mobile_parity_design_environments_risks, docs_superpowers_plans_2026_09_11_yalla_mobile_p0_foundation_node_stub_server [INFERRED 0.75]
-
-## Communities (65 total, 3 thin omitted)
+## Communities (71 total, 4 thin omitted)
 
 ### Community 0 - "models.dart"
 Cohesion: 0.01
-Nodes (154): double?, int?, int points,, Achievement, AchievementDto, active, ActivityItem, adminReply (+146 more)
+Nodes (157): double?, int?, int points,, Achievement, AchievementDto, active, ActivityItem, adminReply (+149 more)
 
-### Community 1 - "package:flutter_test/flutter_test.dart"
-Cohesion: 0.06
-Nodes (48): dart:convert, package:fluenta_mobile/config/app_config.dart, package:fluenta_mobile/features/auth/login_screen.dart, package:fluenta_mobile/features/full_exam/full_exam_store.dart, package:fluenta_mobile/features/onboarding/onboarding_screen.dart, package:fluenta_mobile/features/overview/overview_screen.dart, package:fluenta_mobile/features/writing/visual_prompt.dart, package:fluenta_mobile/features/writing/writing_editor_screen.dart (+40 more)
-
-### Community 2 - "README.md (Mobile)"
+### Community 1 - "package:provider/provider.dart"
 Cohesion: 0.05
-Nodes (53): Analysis Options Config, flutter_lints Recommended Lint Set, Yalla Mobile P0 Foundation Plan, ApiClient + ApiException, AppConfig (persisted Server URL + token), AppState Delegates to AuthState, AuthState + BootStatus, Bootstrap Gate: Splash/Offline + Router Redirect (+45 more)
+Nodes (52): dart:convert, package:fluenta_mobile/config/app_config.dart, package:fluenta_mobile/features/auth/login_screen.dart, package:fluenta_mobile/features/dashboard/dashboard_screen.dart, package:fluenta_mobile/features/full_exam/full_exam_store.dart, package:fluenta_mobile/features/onboarding/onboarding_screen.dart, package:fluenta_mobile/features/overview/overview_screen.dart, package:fluenta_mobile/features/writing/visual_prompt.dart (+44 more)
 
-### Community 3 - "router.dart"
+### Community 2 - "Yalla English Hub — Mobile Parity Design Spec"
+Cohesion: 0.12
+Nodes (16): 10. Out of scope (this round), 11. Acceptance, 1. Why this work exists, 2. Decisions locked in brainstorming, 3.1 Data & config layer (new), 3.2 State & bootstrap, 3.3 Navigation (4-tab shell), 3.4 Models (+8 more)
+
+### Community 3 - "Yalla English Hub — Mobile (Flutter)"
+Cohesion: 0.20
+Nodes (9): Android emulator on the laptop, Flutter web at phone size (laptop preview / quick test), Layout, Local verification without the Java backend, Physical Android phone (primary demo) over WiFi, Run, Tests, What's implemented (+1 more)
+
+### Community 4 - "router.dart"
 Cohesion: 0.06
-Nodes (50): Achievements, AI Features Held, Android Emulator (10.0.2.2), Physical Android Phone Demo over WiFi, ApiClient, APK Build (flutter build apk), AppState, AuthState (+42 more)
+Nodes (35): features/achievements/achievements_screen.dart, features/auth/login_screen.dart, features/bootstrap/offline_screen.dart, features/bootstrap/splash_screen.dart, features/certificates/certificates_screen.dart, features/checkout/checkout_screen.dart, features/coach/coach_screen.dart, features/feedback/feedback_list_screen.dart (+27 more)
 
-### Community 4 - "modals.dart"
-Cohesion: 0.06
-Nodes (34): features/achievements/achievements_screen.dart, features/auth/login_screen.dart, features/bootstrap/offline_screen.dart, features/bootstrap/splash_screen.dart, features/certificates/certificates_screen.dart, features/checkout/checkout_screen.dart, features/coach/coach_screen.dart, features/feedback/feedback_list_screen.dart (+26 more)
+### Community 5 - "modals.dart"
+Cohesion: 0.07
+Nodes (31): DateTime get, _band, _category, confirmLabel, context, createState, _date, _days (+23 more)
 
-### Community 5 - "onboarding_screen.dart"
-Cohesion: 0.06
-Nodes (32): DateTime get, _band, build, _category, confirmLabel, context, createState, _date (+24 more)
-
-### Community 6 - "reading_runner_screen.dart"
+### Community 6 - "onboarding_screen.dart"
 Cohesion: 0.06
 Nodes (31): Color?, DateTime?, _bands, build, _card, center, _choiceGrid, color (+23 more)
 
-### Community 7 - "ui.dart"
+### Community 7 - "reading_runner_screen.dart"
 Cohesion: 0.07
 Nodes (30): _activeColor, _answered, _answers, _bottomBar, _buildParagraphs, createState, dispose, exam (+22 more)
 
-### Community 8 - "Yalla English Hub Mobile Roadmap"
+### Community 8 - "overview_screen.dart"
 Cohesion: 0.07
-Nodes (29): _activityRow, _band, build, color, createState, _future, _hero, _heroDivider (+21 more)
+Nodes (27): _activityRow, _band, color, createState, _future, _hero, _heroDivider, _heroTile (+19 more)
 
-### Community 9 - "app_colors.dart"
+### Community 9 - "mock_api.dart"
 Cohesion: 0.07
 Nodes (28): answer, answers, atProgress, AttemptStore, band, correct, durationUsedSec, GradingStep (+20 more)
 
-### Community 10 - "overview_screen.dart"
+### Community 10 - "ui.dart"
 Cohesion: 0.07
 Nodes (27): Border?, dart:math, EdgeInsetsGeometry, action, bg, border, child, color (+19 more)
 
-### Community 11 - "mock_api.dart"
+### Community 11 - "listening_runner_screen.dart"
 Cohesion: 0.07
 Nodes (27): ../full_exam/full_exam_store.dart, _answered, _answers, _bottomBar, createState, dispose, exam, examId (+19 more)
 
-### Community 12 - "listening_runner_screen.dart"
+### Community 12 - "app_colors.dart"
 Cohesion: 0.07
 Nodes (26): allScoredDone, bands, FullExamStore, has, record, reset, scoredSkills, AppColors (+18 more)
 
-### Community 13 - "section_audio_player.dart"
-Cohesion: 0.07
-Nodes (26): AppConfig, Client, Exception, ApiException, coach, config, createCertificate, createFeedback (+18 more)
+### Community 13 - "api_client.dart"
+Cohesion: 0.05
+Nodes (37): Client, ../config/app_config.dart, dart:io, Exception, app, auth, build, config (+29 more)
 
-### Community 14 - "app_config.dart"
-Cohesion: 0.07
-Nodes (27): Achievements, Certificates, Feedback, Track Switcher, AI Coach Chat, AI Live Interview, AI Speaking Feedback, App Icon, Backend Firewall / Cleartext HTTP Requirement, Backend Wiring (Server URL, ApiClient, Bootstrap Gate), Yalla English Hub Mobile Roadmap (+19 more)
+### Community 14 - "Global Constraints"
+Cohesion: 0.14
+Nodes (13): Global Constraints, Self-Review, Task 10: Phase wrap — end-to-end verification against the stub + graphify refresh, Task 1: Add dependencies + graphify baseline, Task 2: AppConfig — persisted Server URL + token, Task 3: FluentaUser + Streak JSON (de)serialization, Task 4: ApiException + ApiClient (core request + auth/me), Task 5: AuthState (bootstrap / login / logout) (+5 more)
 
-### Community 15 - "api_client.dart"
+### Community 15 - "section_audio_player.dart"
 Cohesion: 0.08
 Nodes (25): AudioPlayer?, alreadyPlayed, audioUrl, build, createState, dispose, durationSec, _error (+17 more)
 
-### Community 16 - "writing_convert.dart"
-Cohesion: 0.08
-Nodes (24): defaultServerUrl, load, mediaBase, _normalize, _prefs, serverUrl, serverUrlKey, setServerUrl (+16 more)
+### Community 16 - "app_config.dart"
+Cohesion: 0.13
+Nodes (14): AppConfig, defaultServerUrl, load, mediaBase, _normalize, _prefs, serverUrl, serverUrlKey (+6 more)
 
-### Community 17 - "data.dart"
-Cohesion: 0.11
-Nodes (22): ChangeNotifier, createState, DashboardScreen, dispose, _ExamCountdownCard, _ExamCountdownCardState, initState, _QuickStartGrid (+14 more)
+### Community 17 - "AppState"
+Cohesion: 0.16
+Nodes (13): ChangeNotifier, build, build, _Item, lockKey, PracticeHubScreen, route, soon (+5 more)
 
-### Community 18 - "AppDelegate"
-Cohesion: 0.11
-Nodes (22): build, CheckoutScreen, _CheckoutScreenState, createState, _selected, SectionAudioPlayer, _SectionAudioPlayerState, _authored (+14 more)
+### Community 18 - "writing_hub_screen.dart"
+Cohesion: 0.20
+Nodes (10): _authored, build, _card, createState, initState, _load, _loading, WritingHubScreen (+2 more)
 
-### Community 19 - "app_state.dart"
+### Community 19 - "writing_convert.dart"
 Cohesion: 0.08
 Nodes (22): a, block, _chartVisual, _formalityKind, g, minWords, out, prompt (+14 more)
 
-### Community 20 - "server.mjs"
-Cohesion: 0.13
-Nodes (18): config/brand.dart, ../exam/question_group_view.dart, build, build, HelpScreen, ListeningResultsScreen, ReadingResultsScreen, _annotated (+10 more)
+### Community 20 - "package:flutter/material.dart"
+Cohesion: 0.12
+Nodes (21): config/brand.dart, ../exam/question_group_view.dart, build, SplashScreen, build, HelpScreen, ListeningResultsScreen, ReadingResultsScreen (+13 more)
 
-### Community 21 - "auth_state.dart"
-Cohesion: 0.14
-Nodes (23): Gradle/Kotlin Daemon Loopback Issue, Branch feat/mobile-writing-runner, Chart-Type to Visual Mapping, Writing Task Defaults (minWords/duration), Mobile Writing Runner Implementation Plan, superpowers:executing-plans Skill, Formality to Kind Mapping, Router extra Passing (writing task) (+15 more)
+### Community 21 - "Mobile Writing Runner — wired to backend — Design"
+Cohesion: 0.12
+Nodes (15): Architecture (all in `fluenta-mobile`), Data caveat, Decisions (from brainstorming), Editor, Error handling & edge cases, Follow-ups (post-implementation), Goal, Hub (+7 more)
 
-### Community 22 - "AppState"
+### Community 22 - "data.dart"
 Cohesion: 0.10
 Nodes (20): achievements, certificates, coachReplyFor, coachSuggestions, currentUser, initialCoachMessages, lessons, listeningDemoGroup (+12 more)
 
-### Community 23 - "writing_editor_screen.dart"
+### Community 23 - "AppDelegate"
 Cohesion: 0.11
 Nodes (14): Any, Bool, Flutter, FlutterAppDelegate, FlutterImplicitEngineBridge, FlutterImplicitEngineDelegate, FlutterSceneDelegate, AppDelegate (+6 more)
 
-### Community 24 - "speaking_screen.dart"
+### Community 24 - "mock_exams_screen.dart"
 Cohesion: 0.12
 Nodes (18): build, createState, _items, MockExamsScreen, _MockExamsScreenState, _part, _type, _uploadSheet (+10 more)
 
-### Community 25 - "reading_hub_screen.dart"
+### Community 25 - "server.mjs"
 Cohesion: 0.11
 Nodes (12): achievements, certificates, exams, feedback, lessons, me, overview, plans (+4 more)
 
-### Community 26 - "login_screen.dart"
+### Community 26 - "coach_screen.dart"
 Cohesion: 0.14
-Nodes (16): AuthState, _bubble, build, CoachScreen, _CoachScreenState, _composer, _controller, createState (+8 more)
+Nodes (14): _bubble, build, CoachScreen, _CoachScreenState, _composer, _controller, createState, dispose (+6 more)
 
-### Community 27 - "../theme/app_colors.dart"
-Cohesion: 0.12
-Nodes (14): ../config/app_config.dart, build, app, auth, build, config, main, package:fluenta_mobile/features/dashboard/dashboard_screen.dart (+6 more)
+### Community 27 - "brand.dart"
+Cohesion: 0.17
+Nodes (11): Brand, coachName, currency, domain, logoInitial, name, shortName, shortPitch (+3 more)
 
-### Community 28 - "package:go_router/go_router.dart"
+### Community 28 - "login_screen.dart"
 Cohesion: 0.12
 Nodes (16): build, _busy, createState, dispose, _email, _fillDemo, initState, LoginScreen (+8 more)
 
-### Community 29 - "question_group_view.dart"
+### Community 29 - "app_state.dart"
+Cohesion: 0.11
+Nodes (17): auth_state.dart, bool get, FluentaUser? get, _auth, bind, clearExamDate, effectivePlan, isLocked (+9 more)
+
+### Community 30 - "auth_state.dart"
 Cohesion: 0.12
-Nodes (15): auth_state.dart, _auth, bind, clearExamDate, effectivePlan, isLocked, isPro, _previewFree (+7 more)
+Nodes (16): BootStatus get, FluentaUser, ApiClient, api, BootStatus, bootstrap, config, _error (+8 more)
 
-### Community 30 - "fluenta_mobile pubspec.yaml"
-Cohesion: 0.12
-Nodes (15): bool get, BootStatus get, FluentaUser? get, api, bootstrap, config, _error, isAuthed (+7 more)
-
-### Community 31 - "Yalla Mobile P0 Foundation Plan"
+### Community 31 - "writing_editor_screen.dart"
 Cohesion: 0.13
-Nodes (15): int get, build, _controller, createState, dispose, initState, task, taskId (+7 more)
+Nodes (14): int get, build, _controller, createState, dispose, initState, _submit, task (+6 more)
 
-### Community 32 - "Yalla Mobile Parity Design Spec"
-Cohesion: 0.13
-Nodes (15): build, createState, dispose, _done, _elapsed, initState, _loadParts, _part (+7 more)
+### Community 32 - "speaking_screen.dart"
+Cohesion: 0.08
+Nodes (24): _clips, createState, dispose, _elapsed, initState, _loadParts, _part, _parts (+16 more)
 
-### Community 33 - "coach_screen.dart"
+### Community 33 - "reading_hub_screen.dart"
 Cohesion: 0.14
 Nodes (14): IconData?, build, createState, _featured, _future, icon, initState, _load (+6 more)
 
-### Community 34 - "../../widgets/ui.dart"
+### Community 34 - "question_group_view.dart"
 Cohesion: 0.14
 Nodes (13): answers, build, _choiceTypes, group, _input, _pill, _questionCard, QuestionGroupView (+5 more)
 
-### Community 35 - "track_switcher.dart"
-Cohesion: 0.17
-Nodes (11): full_exam_store.dart, createState, FullExamResultsScreen, _FullExamResultsScreenState, _issuing, _skillRow, AppShell, build (+3 more)
+### Community 35 - "full_exam_results_screen.dart"
+Cohesion: 0.33
+Nodes (6): createState, FullExamResultsScreen, _FullExamResultsScreenState, _issuing, _skillRow, ../services/api_client.dart
 
-### Community 36 - "exam_convert.dart"
-Cohesion: 0.18
-Nodes (13): build, build, build, build, build, build, build, initState (+5 more)
+### Community 36 - "Route /"
+Cohesion: 0.29
+Nodes (7): build, build, build, build, initState, Route /, Route /listening
 
-### Community 37 - "Mobile Writing Runner Implementation Pla"
+### Community 37 - "track_switcher.dart"
 Cohesion: 0.17
 Nodes (12): build, context, createState, _future, initState, _row, showModalBottomSheet, showTrackSwitcher (+4 more)
 
-### Community 38 - "Route /"
+### Community 38 - "exam_convert.dart"
 Cohesion: 0.15
 Nodes (12): _group, listeningExamFromContent, _listeningSection, map, _options, _passage, passages, _question (+4 more)
 
-### Community 39 - "AuthState"
+### Community 39 - "grading_overlay.dart"
 Cohesion: 0.18
 Nodes (11): dart:async, build, createState, dispose, _GradingDialog, _GradingDialogState, initState, _pct (+3 more)
 
-### Community 40 - "Mobile Writing Runner Design"
-Cohesion: 0.26
-Nodes (11): build, _busy, _c, createState, dispose, initState, _saveAndReconnect, _ServerUrlCard (+3 more)
+### Community 40 - "AuthState"
+Cohesion: 0.20
+Nodes (14): build, OfflineScreen, build, _busy, _c, createState, dispose, initState (+6 more)
 
-### Community 41 - "full_exam_screen.dart"
+### Community 41 - "achievements_screen.dart"
 Cohesion: 0.20
 Nodes (10): _achIcon, AchievementsScreen, _AchievementsScreenState, build, _card, createState, _filter, _future (+2 more)
 
-### Community 42 - "achievements_screen.dart"
+### Community 42 - "build"
 Cohesion: 0.18
 Nodes (11): _generateCertificate, build, _plan, build, Route /achievements, Route /certificates, Route /checkout, Route /feedback (+3 more)
 
-### Community 43 - "package:flutter/material.dart"
+### Community 43 - "manifest.json"
 Cohesion: 0.18
 Nodes (10): background_color, description, display, icons, name, orientation, prefer_related_applications, short_name (+2 more)
 
-### Community 44 - "mock_exams_screen.dart"
+### Community 44 - "certificates_screen.dart"
 Cohesion: 0.22
 Nodes (9): Future, build, _card, CertificatesScreen, _CertificatesScreenState, createState, _future, initState (+1 more)
 
-### Community 45 - "writing_hub_screen.dart"
+### Community 45 - "feedback_list_screen.dart"
 Cohesion: 0.22
 Nodes (9): build, _card, createState, FeedbackListScreen, _FeedbackListScreenState, _future, initState, _reload (+1 more)
 
-### Community 46 - "manifest.json"
-Cohesion: 0.22
-Nodes (9): build, createState, _extra, _extraCard, FullExamScreen, _FullExamScreenState, _scored, _scoredCard (+1 more)
+### Community 46 - "full_exam_screen.dart"
+Cohesion: 0.20
+Nodes (10): full_exam_store.dart, build, createState, _extra, _extraCard, FullExamScreen, _FullExamScreenState, _scored (+2 more)
 
-### Community 47 - "main.dart"
-Cohesion: 0.22
-Nodes (9): build, createState, examId, full, initState, ListeningLoaderScreen, _ListeningLoaderScreenState, listening_runner_screen.dart (+1 more)
+### Community 47 - "listening_loader_screen.dart"
+Cohesion: 0.25
+Nodes (8): build, createState, examId, full, initState, ListeningLoaderScreen, _ListeningLoaderScreenState, listening_runner_screen.dart
 
-### Community 48 - "grading_overlay.dart"
+### Community 48 - "StatelessWidget"
 Cohesion: 0.20
 Nodes (10): _StepHeader, EmptyStateView, FluentaCard, GradientCard, LockPill, PillBadge, ProgressRing, SectionHeader (+2 more)
 
-### Community 49 - "certificates_screen.dart"
+### Community 49 - "reading_loader_screen.dart"
 Cohesion: 0.22
 Nodes (9): build, createState, examId, full, initState, ReadingLoaderScreen, _ReadingLoaderScreenState, reading_runner_screen.dart (+1 more)
 
-### Community 50 - "feedback_list_screen.dart"
+### Community 50 - "../models/models.dart"
 Cohesion: 0.20
 Nodes (9): _endingsBox, _featuresBox, _headingsBox, _paraBox, readingExam, _tfng, _ynng, ReadingExam (+1 more)
 
-### Community 51 - "listening_loader_screen.dart"
-Cohesion: 0.25
-Nodes (8): AI Writing Feedback, Roles / Admin Gating, Writing Runner Wired to Backend, Task 5: Docs + Graphify Update, Data Caveat: seed-w1 Draft, Design Decisions (Visual, Module, Grading, Backend), Follow-Ups (Roadmap + Graphify), Out of Scope
+### Community 51 - "Mobile Writing Runner (wired to backend) Implementation Plan"
+Cohesion: 0.20
+Nodes (9): File Structure, Global Constraints, Mobile Writing Runner (wired to backend) Implementation Plan, Self-Review, Task 1: Model fields + writing converter, Task 2: VisualPrompt widget, Task 3: Editor — consume task, render visual + bullets, fix pre-fill, Task 4: Hub — fetch published writing exams (+1 more)
 
-### Community 52 - "State"
+### Community 52 - "visual_prompt.dart"
 Cohesion: 0.25
 Nodes (7): build, paint, _series, shouldRepaint, visual, VisualPrompt, String?
 
-### Community 53 - "StatelessWidget"
-Cohesion: 0.29
-Nodes (6): app_colors.dart, buildAppTheme, scheme, textTheme, package:flutter/material.dart, package:google_fonts/google_fonts.dart
-
-### Community 54 - "reading_loader_screen.dart"
+### Community 53 - "app_theme.dart"
 Cohesion: 0.33
-Nodes (6): build, createState, _filter, _kindIcon, LessonsScreen, _LessonsScreenState
+Nodes (5): app_colors.dart, buildAppTheme, scheme, textTheme, package:google_fonts/google_fonts.dart
 
-### Community 55 - "../models/models.dart"
-Cohesion: 0.40
-Nodes (5): _submit, _submit, Route /full-exam, Route /results/listening, Route /results/reading
+### Community 54 - "../../widgets/ui.dart"
+Cohesion: 0.20
+Nodes (9): build, createState, _selected, build, createState, _filter, _kindIcon, ../mock/data.dart (+1 more)
 
-### Community 56 - "progress_screen.dart"
+### Community 55 - "build"
+Cohesion: 0.20
+Nodes (11): build, _submit, build, _submit, build, Route /coach, Route /full-exam, Route /progress (+3 more)
+
+### Community 56 - "CustomPainter"
 Cohesion: 0.50
 Nodes (4): CustomPainter, _SeriesChartPainter, _LineChartPainter, _RingPainter
 
-### Community 57 - "Writing Runner Wired to Backend"
+### Community 57 - "State"
+Cohesion: 0.27
+Nodes (10): CheckoutScreen, _CheckoutScreenState, LessonsScreen, _LessonsScreenState, SectionAudioPlayer, _SectionAudioPlayerState, WritingEditorScreen, _WritingEditorScreenState (+2 more)
+
+### Community 65 - "dashboard_screen.dart"
+Cohesion: 0.22
+Nodes (9): createState, DashboardScreen, dispose, _ExamCountdownCard, _ExamCountdownCardState, initState, _QuickStartGrid, _StreakCard (+1 more)
+
+### Community 66 - "Yalla English Hub — Mobile Roadmap"
+Cohesion: 0.29
+Nodes (6): Done (parity build + runners), Held product-wide (blocked on backend / product — same as web), Mobile-specific — next up, Notes / known environment issues, Release / distribution (before a public launch), Yalla English Hub — Mobile Roadmap
+
+### Community 67 - "package:go_router/go_router.dart"
+Cohesion: 0.33
+Nodes (5): AppShell, build, navigationShell, package:go_router/go_router.dart, StatefulNavigationShell
+
+### Community 68 - "more_screen.dart"
+Cohesion: 0.40
+Nodes (4): MoreScreen, _tile, ../state/app_state.dart, ../tracks/track_switcher.dart
+
+### Community 69 - "Yalla mock API (env A)"
 Cohesion: 0.50
-Nodes (4): Real Audio for Speaking Prompts, Real Listening Audio Pipeline, VisualPrompt Widget (Plan), Architecture: VisualPrompt Widget
+Nodes (3): Routes, Run, Yalla mock API (env A)
 
 ## Knowledge Gaps
-- **760 isolated node(s):** `XCTest`, `serverUrlKey`, `tokenKey`, `defaultServerUrl`, `_prefs` (+755 more)
+- **776 isolated node(s):** `XCTest`, `serverUrlKey`, `tokenKey`, `defaultServerUrl`, `_prefs` (+771 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **3 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **4 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `AuthState` connect `Mobile Writing Runner Design` to `README.md (Mobile)`, `onboarding_screen.dart`, `reading_runner_screen.dart`, `ui.dart`, `Yalla English Hub Mobile Roadmap`, `mock_api.dart`, `data.dart`, `AppDelegate`, `../theme/app_colors.dart`, `package:go_router/go_router.dart`, `question_group_view.dart`, `fluenta_mobile pubspec.yaml`, `Yalla Mobile Parity Design Spec`, `coach_screen.dart`, `track_switcher.dart`, `Mobile Writing Runner Implementation Pla`, `full_exam_screen.dart`, `achievements_screen.dart`, `mock_exams_screen.dart`, `writing_hub_screen.dart`, `main.dart`, `certificates_screen.dart`, `../models/models.dart`?**
-  _High betweenness centrality (0.111) - this node is a cross-community bridge._
-- **Why does `fluenta_mobile pubspec.yaml` connect `README.md (Mobile)` to `router.dart`?**
-  _High betweenness centrality (0.109) - this node is a cross-community bridge._
-- **Why does `go_router` connect `router.dart` to `README.md (Mobile)`?**
-  _High betweenness centrality (0.100) - this node is a cross-community bridge._
+- **Why does `AuthState` connect `AuthState` to `modals.dart`, `onboarding_screen.dart`, `reading_runner_screen.dart`, `overview_screen.dart`, `listening_runner_screen.dart`, `api_client.dart`, `AppState`, `writing_hub_screen.dart`, `coach_screen.dart`, `login_screen.dart`, `app_state.dart`, `auth_state.dart`, `writing_editor_screen.dart`, `speaking_screen.dart`, `reading_hub_screen.dart`, `full_exam_results_screen.dart`, `track_switcher.dart`, `achievements_screen.dart`, `build`, `certificates_screen.dart`, `feedback_list_screen.dart`, `listening_loader_screen.dart`, `reading_loader_screen.dart`, `build`, `State`, `more_screen.dart`?**
+  _High betweenness centrality (0.064) - this node is a cross-community bridge._
+- **Why does `AppState` connect `AppState` to `speaking_screen.dart`, `dashboard_screen.dart`, `full_exam_results_screen.dart`, `more_screen.dart`, `modals.dart`, `overview_screen.dart`, `AuthState`, `build`, `api_client.dart`, `full_exam_screen.dart`, `writing_hub_screen.dart`, `build`, `app_state.dart`?**
+  _High betweenness centrality (0.021) - this node is a cross-community bridge._
+- **Why does `ReadingExam` connect `../models/models.dart` to `models.dart`, `reading_runner_screen.dart`?**
+  _High betweenness centrality (0.010) - this node is a cross-community bridge._
 - **What connects `XCTest`, `serverUrlKey`, `tokenKey` to the rest of the system?**
-  _760 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _776 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `models.dart` be split into smaller, more focused modules?**
-  _Cohesion score 0.012903225806451613 - nodes in this community are weakly interconnected._
-- **Should `package:flutter_test/flutter_test.dart` be split into smaller, more focused modules?**
-  _Cohesion score 0.05683563748079877 - nodes in this community are weakly interconnected._
-- **Should `README.md (Mobile)` be split into smaller, more focused modules?**
-  _Cohesion score 0.05370101596516691 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.012658227848101266 - nodes in this community are weakly interconnected._
+- **Should `package:provider/provider.dart` be split into smaller, more focused modules?**
+  _Cohesion score 0.05311676909569798 - nodes in this community are weakly interconnected._
+- **Should `Yalla English Hub — Mobile Parity Design Spec` be split into smaller, more focused modules?**
+  _Cohesion score 0.11764705882352941 - nodes in this community are weakly interconnected._
