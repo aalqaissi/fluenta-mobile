@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 import 'package:record/record.dart';
@@ -184,8 +185,7 @@ class _SpeakingScreenState extends State<SpeakingScreen> {
                 Expanded(
                   child: InkWell(
                     borderRadius: BorderRadius.circular(14),
-                    onTap: () => showToast(context, 'Live Interview is coming soon',
-                        description: 'Real-time AI examiner conversation.'),
+                    onTap: () => context.push('/speaking/live-interview'),
                     child: Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
@@ -193,10 +193,10 @@ class _SpeakingScreenState extends State<SpeakingScreen> {
                         border: Border.all(color: AppColors.border),
                       ),
                       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                        Row(children: const [
-                          Icon(Icons.record_voice_over_rounded, color: AppColors.mutedForeground),
-                          Spacer(),
-                          PillBadge('Soon', color: AppColors.mutedForeground),
+                        Row(children: [
+                          const Icon(Icons.record_voice_over_rounded, color: AppColors.mutedForeground),
+                          const Spacer(),
+                          PillBadge('New', color: AppColors.info),
                         ]),
                         const SizedBox(height: 6),
                         const Text('Live Interview', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13.5)),

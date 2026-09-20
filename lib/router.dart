@@ -19,6 +19,7 @@ import 'features/writing/writing_results_screen.dart';
 import 'features/listening/listening_loader_screen.dart';
 import 'features/listening/listening_results_screen.dart';
 import 'features/speaking/speaking_screen.dart';
+import 'features/simulation/live_interview_screen.dart';
 import 'features/full_exam/full_exam_screen.dart';
 import 'features/full_exam/full_exam_results_screen.dart';
 import 'features/mock_exams/mock_exams_screen.dart';
@@ -84,6 +85,7 @@ GoRouter buildRouter(AuthState auth) {
               full: s.uri.queryParameters['full'] == '1')),
       GoRoute(path: '/results/listening', builder: (c, s) => const ListeningResultsScreen()),
       GoRoute(path: '/speaking', builder: (c, s) => const SpeakingScreen()),
+      GoRoute(path: '/speaking/live-interview', builder: (c, s) => const LiveInterviewScreen()),
       GoRoute(path: '/full-exam', builder: (c, s) => const FullExamScreen()),
       GoRoute(path: '/results/full', builder: (c, s) => const FullExamResultsScreen()),
       GoRoute(path: '/mock-exams', builder: (c, s) => const MockExamsScreen()),
