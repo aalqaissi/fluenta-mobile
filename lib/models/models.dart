@@ -839,6 +839,27 @@ class SpeakingResult {
       );
 }
 
+class InterviewTurn {
+  final String role; // "examiner" | "candidate"
+  final String text;
+  const InterviewTurn({required this.role, required this.text});
+  Map<String, dynamic> toJson() => {'role': role, 'text': text};
+}
+
+class LiveInterviewReply {
+  final String transcript;
+  final String reply;
+  final int part;
+  final bool done;
+  LiveInterviewReply({required this.transcript, required this.reply, required this.part, required this.done});
+  factory LiveInterviewReply.fromJson(Map<String, dynamic> j) => LiveInterviewReply(
+        transcript: j['transcript'] as String? ?? '',
+        reply: j['reply'] as String? ?? '',
+        part: (j['part'] as num?)?.toInt() ?? 1,
+        done: j['done'] as bool? ?? false,
+      );
+}
+
 // ---- Plans / coach / lessons / achievements / certificates ----
 class Plan {
   final String id;

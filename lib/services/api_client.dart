@@ -200,4 +200,25 @@ class ApiClient {
       _request('POST', '/ai/speaking-feedback',
           body: {'examId': examId, 'parts': parts},
           decode: (json) => SpeakingResult.fromJson(json as Map<String, dynamic>));
+
+  Future<LiveInterviewReply> liveInterviewTurn({
+    required int part,
+    required List<InterviewTurn> history,
+    String? answerAudioUrl,
+  }) =>
+      _request('POST', '/ai/live-interview/turn',
+          body: {
+            'part': part,
+            'history': history.map((t) => t.toJson()).toList(),
+            'answerAudioUrl': answerAudioUrl,
+          },
+          decode: (j) => LiveInterviewReply.fromJson(j as Map<String, dynamic>));
+
+  Future<SpeakingResult> liveInterviewGrade({
+    required String examId,
+    required List<Map<String, dynamic>> parts,
+  }) =>
+      _request('POST', '/ai/live-interview/grade',
+          body: {'examId': examId, 'parts': parts},
+          decode: (j) => SpeakingResult.fromJson(j as Map<String, dynamic>));
 }
