@@ -16,7 +16,21 @@ class ReadingHubScreen extends StatefulWidget {
 
 class _ReadingHubScreenState extends State<ReadingHubScreen> {
   late Future<List<ExamDto>> _future;
-  ExamDto? _featured; // random pick, stable until the list reloads or the student shuffles
+  ExamDto? _featured; // random pick, stable until the list reloads, the module changes or the student shuffles
+  String _module = 'academic'; // Academic / General Training filter
+
+  Widget _empty(String msg, {bool retry = false}) => Padding(
+        padding: const EdgeInsets.all(24),
+        child: EmptyStateView(
+          icon: Icons.menu_book_rounded,
+          title: 'No reading practice yet',
+          description: msg,
+          action: FilledButton(
+            onPressed: () => setState(() => _future = _load()),
+            child: Text(retry ? 'Retry' : 'Refresh'),
+          ),
+        ),
+      );
 
   @override
   void initState() {
@@ -27,7 +41,7 @@ class _ReadingHubScreenState extends State<ReadingHubScreen> {
   /// Every published reading exam — built-in and Content Studio alike.
   Future<List<ExamDto>> _load() async {
     final list = await context.read<AuthState>().api.listExams(skill: 'reading', status: 'published');
-    _featured = pickRandom(list, avoid: _featured);
+    _featured = null; // re-picked for the current module on build
     return list;
   }
 
@@ -51,27 +65,14 @@ class _ReadingHubScreenState extends State<ReadingHubScreen> {
           if (snap.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
-          if (snap.hasError || (snap.data?.isEmpty ?? true)) {
-            final msg = snap.error is ApiException
-                ? (snap.error as ApiException).message
-                : 'No reading exams are published yet.';
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: EmptyStateView(
-                  icon: Icons.menu_book_rounded,
-                  title: 'No reading practice yet',
-                  description: msg,
-                  action: FilledButton(
-                    onPressed: () => setState(() => _future = _load()),
-                    child: const Text('Retry'),
-                  ),
-                ),
-              ),
-            );
+          if (snap.hasError) {
+            final msg = snap.error is ApiException ? (snap.error as ApiException).message : 'Could not load reading tests.';
+            return _empty(msg, retry: true);
           }
-          final exams = snap.data!;
-          final featured = _featured != null && exams.contains(_featured) ? _featured! : exams.first;
+          // Only tests for the chosen module; "both" suits either.
+          final exams = snap.data!.where((e) => e.module == 'both' || e.module == _module).toList();
+          if (_featured == null || !exams.contains(_featured)) _featured = pickRandom(exams);
+          final featured = _featured;
           return RefreshIndicator(
             onRefresh: () async {
               final next = _load();
@@ -81,11 +82,25 @@ class _ReadingHubScreenState extends State<ReadingHubScreen> {
             child: ListView(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
               children: [
-                _featuredCard(featured, canShuffle: exams.length > 1, onShuffle: () => setState(() => _featured = pickRandom(exams, avoid: featured))),
-                if (exams.length > 1) ...[
-                  const SizedBox(height: 20),
-                  const SectionHeader('More reading tests'),
-                  for (final e in exams.where((e) => e != featured)) _row(e),
+                SegmentedButton<String>(
+                  segments: const [
+                    ButtonSegment(value: 'academic', label: Text('Academic')),
+                    ButtonSegment(value: 'general', label: Text('General Training')),
+                  ],
+                  selected: {_module},
+                  showSelectedIcon: false,
+                  onSelectionChanged: (s) => setState(() => _module = s.first),
+                ),
+                const SizedBox(height: 14),
+                if (featured == null)
+                  _empty('No ${_module == 'general' ? 'General Training' : 'Academic'} reading tests are published yet.')
+                else ...[
+                  _featuredCard(featured, canShuffle: exams.length > 1, onShuffle: () => setState(() => _featured = pickRandom(exams, avoid: featured))),
+                  if (exams.length > 1) ...[
+                    const SizedBox(height: 20),
+                    const SectionHeader('More reading tests'),
+                    for (final e in exams.where((e) => e != featured)) _row(e),
+                  ],
                 ],
               ],
             ),

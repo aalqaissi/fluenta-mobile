@@ -34,7 +34,8 @@ class QuestionGroupView extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (_selectTypes.contains(group.type) && group.sharedOptions != null)
+        // Reference list (skipped when the options are bare letters with no text).
+        if (_selectTypes.contains(group.type) && (group.sharedOptions?.any((o) => o.text.isNotEmpty) ?? false))
           Container(
             width: double.infinity,
             margin: const EdgeInsets.only(bottom: 12),
@@ -165,7 +166,7 @@ class QuestionGroupView extends StatelessWidget {
           decoration: const InputDecoration(hintText: 'Choose…', contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10)),
           items: (group.sharedOptions ?? []).map((o) {
             final t = o.text.length > 34 ? '${o.text.substring(0, 34)}…' : o.text;
-            return DropdownMenuItem(value: o.key, child: Text('${o.key} — $t', overflow: TextOverflow.ellipsis));
+            return DropdownMenuItem(value: o.key, child: Text(t.isEmpty ? o.key : '${o.key} — $t', overflow: TextOverflow.ellipsis));
           }).toList(),
           onChanged: review ? null : (v) => onChanged(q.id, v ?? ''),
         ),

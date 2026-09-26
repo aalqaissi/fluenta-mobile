@@ -257,9 +257,23 @@ class _ReadingRunnerScreenState extends State<ReadingRunnerScreen> {
         _recognizers.add(recognizer);
         spans.add(TextSpan(text: sentences[si], style: TextStyle(backgroundColor: bg), recognizer: recognizer));
       }
+      final text = Text.rich(TextSpan(children: spans), style: const TextStyle(fontSize: 15, height: 1.7, color: AppColors.foreground));
+      final label = (passage.paragraphLabels != null && pi < passage.paragraphLabels!.length) ? passage.paragraphLabels![pi] : '';
       widgets.add(Padding(
         padding: const EdgeInsets.only(bottom: 14),
-        child: Text.rich(TextSpan(children: spans), style: const TextStyle(fontSize: 15, height: 1.7, color: AppColors.foreground)),
+        child: label.isEmpty
+            ? text
+            : Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Container(
+                  width: 24,
+                  height: 24,
+                  margin: const EdgeInsets.only(top: 2, right: 10),
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(color: AppColors.primary.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(6)),
+                  child: Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.primary)),
+                ),
+                Expanded(child: text),
+              ]),
       ));
     }
     return widgets;

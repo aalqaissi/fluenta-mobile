@@ -632,6 +632,8 @@ class Passage {
   final int passageNumber;
   final int totalPassages;
   final List<String> paragraphs;
+  /// IELTS paragraph letters ("A", "B", …) aligned with [paragraphs], when labelled.
+  final List<String>? paragraphLabels;
   final List<QuestionGroup> groups;
   const Passage({
     required this.id,
@@ -640,6 +642,7 @@ class Passage {
     required this.passageNumber,
     required this.totalPassages,
     required this.paragraphs,
+    this.paragraphLabels,
     required this.groups,
   });
 }

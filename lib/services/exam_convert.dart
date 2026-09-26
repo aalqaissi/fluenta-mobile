@@ -23,8 +23,12 @@ Map<String, dynamic> runnerContent(ExamDto e) {
   };
 }
 
-const _letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+const _letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'];
 const _wordLimitTypes = {'sentence-completion', 'summary-completion', 'short-answer', 'diagram-label'};
+/// Matching types answered from a lettered list the admin writes in the Studio.
+const _authoredOptionTypes = {'matching-headings', 'matching-features', 'matching-sentence-endings'};
+/// Matching types answered with the passage's paragraph letters.
+const _paragraphOptionTypes = {'matching-information'};
 const _tfng = [
   {'key': 'True', 'text': 'True'},
   {'key': 'False', 'text': 'False'},
@@ -39,13 +43,87 @@ const _ynng = [
 List<Map<String, dynamic>> _maps(dynamic raw) =>
     ((raw as List?) ?? []).map((e) => Map<String, dynamic>.from(e as Map)).toList();
 
-/// How a studio question can be answered on mobile: TF/NG and Y/N/NG keep their
-/// pills, multiple choice keeps its lettered options, and everything else (which
-/// the Studio captures as prompt + answer only) becomes a typed answer.
-String _renderKind(String type) => switch (type) {
+// ---- passage text (mirrors the web app's src/features/studio/passageText.ts) ----
+
+class ParsedPassage {
+  final List<String> paragraphs;
+  /// Letter per paragraph when the admin labelled them ("A", "B", … IELTS style).
+  final List<String>? labels;
+  const ParsedPassage(this.paragraphs, [this.labels]);
+}
+
+// A line holding only a paragraph letter: "A", "B.", "(C)", "Paragraph D".
+final _labelLine = RegExp(r'^\s*(?:paragraph\s+)?\(?([A-Z])[.):]?\s*$', caseSensitive: false);
+String _squash(String s) => s.replaceAll(RegExp(r'\s+'), ' ').trim();
+
+/// Splits passage text into paragraphs. A line containing only a letter labels
+/// the paragraph below it (text up to the next label is one paragraph).
+/// Unlabelled text splits on blank lines, or on single line breaks when the
+/// text has no blank lines at all.
+ParsedPassage parsePassageText(String text) {
+  final t = text.replaceAll(RegExp(r'\r\n?'), '\n');
+  final lines = t.split('\n');
+  if (lines.any(_labelLine.hasMatch)) {
+    final paragraphs = <String>[];
+    final labels = <String>[];
+    var body = <String>[];
+    String? label;
+    void flush() {
+      final p = _squash(body.join(' '));
+      if (p.isNotEmpty) {
+        paragraphs.add(p);
+        labels.add(label ?? '');
+      }
+      body = [];
+    }
+
+    for (final line in lines) {
+      final m = _labelLine.firstMatch(line);
+      if (m != null) {
+        flush();
+        label = m.group(1)!.toUpperCase();
+      } else {
+        body.add(line);
+      }
+    }
+    flush();
+    return ParsedPassage(paragraphs, labels);
+  }
+  final chunks = RegExp(r'\n\s*\n').hasMatch(t) ? t.split(RegExp(r'\n\s*\n')) : lines;
+  return ParsedPassage(chunks.map(_squash).where((s) => s.isNotEmpty).toList());
+}
+
+List<String> _paragraphKeys(ParsedPassage p) {
+  final labelled = (p.labels ?? const <String>[]).where((l) => l.isNotEmpty).toList();
+  return labelled.isNotEmpty ? labelled : [for (var i = 0; i < p.paragraphs.length && i < _letters.length; i++) _letters[i]];
+}
+
+/// The lettered choices students pick from for a matching [type] in this passage:
+/// the paragraph letters, the admin's answer list, or — for an exam authored
+/// before the Studio captured a list — bare letters A…(highest used in [answers]).
+List<Map<String, String>>? _matchingOptions(String type, Map<String, dynamic> passage, ParsedPassage parsed, List<String> answers) {
+  if (_paragraphOptionTypes.contains(type)) {
+    return [for (final k in _paragraphKeys(parsed)) {'key': k, 'text': 'Paragraph $k'}];
+  }
+  if (!_authoredOptionTypes.contains(type)) return null;
+  final raw = (passage['options'] as List?) ?? const [];
+  final authored = [
+    for (var i = 0; i < raw.length && i < _letters.length; i++)
+      if ('${raw[i]}'.trim().isNotEmpty) {'key': _letters[i], 'text': '${raw[i]}'.trim()},
+  ];
+  if (authored.isNotEmpty) return authored;
+  final highest = answers.map((a) => _letters.indexOf(a.trim().toUpperCase())).fold(-1, max);
+  return [for (var i = 0; i < max(highest + 1, 4); i++) {'key': _letters[i], 'text': ''}];
+}
+
+/// How a studio question is answered on mobile. With [matching] (reading, where
+/// the passage supplies the lettered list) matching types keep their type;
+/// otherwise anything without its own choices becomes a typed answer.
+String _renderKind(String type, {required bool matching}) => switch (type) {
       'true-false-notgiven' || 'yes-no-notgiven' => type,
       'multiple-choice' || 'multi-select' => 'multiple-choice',
       _ when _wordLimitTypes.contains(type) => type,
+      _ when matching && (_authoredOptionTypes.contains(type) || _paragraphOptionTypes.contains(type)) => type,
       _ => 'short-answer',
     };
 
@@ -54,24 +132,39 @@ String _instructions(String kind) => switch (kind) {
       'yes-no-notgiven' => "Do the following statements agree with the writer's views? Choose Yes, No or Not Given.",
       'multiple-choice' => 'Choose the correct letter for each question.',
       'short-answer' => 'Answer the questions. Write no more than the stated number of words.',
+      'matching-information' => 'Which paragraph contains the following information? Choose the correct letter. You may use any letter more than once.',
+      'matching-headings' => 'Choose the correct heading for each paragraph from the list of headings.',
+      'matching-features' => 'Match each statement with the correct option from the list. You may use any letter more than once.',
+      'matching-sentence-endings' => 'Complete each sentence with the correct ending from the list.',
       _ => 'Complete each sentence. Write no more than the stated number of words.',
     };
 
 /// Splits a passage/section's studio questions into runner groups — one per run
-/// of consecutive questions that render the same way. [counter] numbers
-/// questions continuously across the whole exam.
-List<Map<String, dynamic>> _studioGroups(String ownerId, String defaultType, List<Map<String, dynamic>> questions, List<int> counter) {
+/// of consecutive same-type questions ("Questions 1–5", "Questions 6–9", …).
+/// [counter] numbers questions continuously across the whole exam.
+/// [optionsFor] supplies a matching group's lettered list (reading only).
+List<Map<String, dynamic>> _studioGroups(
+  String ownerId,
+  String defaultType,
+  List<Map<String, dynamic>> questions,
+  List<int> counter, {
+  List<Map<String, String>>? Function(String kind, List<String> answers)? optionsFor,
+}) {
   final groups = <Map<String, dynamic>>[];
+  String kindOf(Map<String, dynamic> q) => _renderKind((q['type'] as String?) ?? defaultType, matching: optionsFor != null);
   for (final q in questions) {
-    final kind = _renderKind((q['type'] as String?) ?? defaultType);
+    final kind = kindOf(q);
     if (groups.isEmpty || groups.last['type'] != kind) {
+      final shared = kind == 'true-false-notgiven'
+          ? _tfng
+          : kind == 'yes-no-notgiven'
+              ? _ynng
+              : optionsFor?.call(kind, [for (final x in questions) if (kindOf(x) == kind) '${x['answer'] ?? ''}']);
       groups.add({
         'id': '$ownerId-g${groups.length + 1}',
         'type': kind,
-        'rangeLabel': 'Questions (${questionTypeFromKey(kind).label})',
         'instructions': _instructions(kind),
-        if (kind == 'true-false-notgiven') 'sharedOptions': _tfng,
-        if (kind == 'yes-no-notgiven') 'sharedOptions': _ynng,
+        'sharedOptions': ?shared,
         'questions': <Map<String, dynamic>>[],
       });
     }
@@ -82,7 +175,7 @@ List<Map<String, dynamic>> _studioGroups(String ownerId, String defaultType, Lis
       'number': counter[0]++,
       'prompt': (q['prompt'] as String?) ?? '',
       'correct': (q['answer'] as String?) ?? '',
-      if (limit != null && limit > 0 && kind != 'multiple-choice') 'wordLimit': 'Max $limit word${limit == 1 ? '' : 's'}',
+      if (limit != null && limit > 0 && _wordLimitTypes.contains(kind)) 'wordLimit': 'Max $limit word${limit == 1 ? '' : 's'}',
       if (kind == 'multiple-choice')
         'options': [
           for (var i = 0; i < options.length && i < _letters.length; i++)
@@ -90,34 +183,44 @@ List<Map<String, dynamic>> _studioGroups(String ownerId, String defaultType, Lis
         ],
     });
   }
+  for (final g in groups) {
+    final qs = g['questions'] as List;
+    final first = (qs.first as Map)['number'];
+    final last = (qs.last as Map)['number'];
+    g['rangeLabel'] = first == last ? 'Question $first' : 'Questions $first–$last';
+  }
   return groups;
 }
 
 Map<String, dynamic> _studioReading(ExamDto e) {
   final passages = _maps(e.content['passages']);
   final counter = [1];
+  final out = <Map<String, dynamic>>[];
+  for (var i = 0; i < passages.length; i++) {
+    final p = passages[i];
+    final text = (p['text'] as String?) ?? '';
+    final parsed = parsePassageText(text.trim().isEmpty ? 'This passage was authored in the Content Studio.' : text);
+    final groups = _studioGroups('${p['id']}', (p['questionType'] as String?) ?? 'short-answer', _maps(p['questions']), counter,
+        optionsFor: (kind, answers) => _matchingOptions(kind, p, parsed, answers));
+    // Unlabelled passages get A, B, C… when a question asks "which paragraph".
+    final asksParagraph = groups.any((g) => _paragraphOptionTypes.contains(g['type']));
+    out.add({
+      'id': p['id'],
+      'headline': ((p['title'] as String?) ?? '').isEmpty ? 'Passage ${i + 1}' : p['title'],
+      'label': e.module == 'general' ? 'General Training' : 'Academic',
+      'passageNumber': i + 1,
+      'totalPassages': passages.length,
+      'paragraphs': parsed.paragraphs,
+      if (parsed.labels != null || asksParagraph) 'paragraphLabels': parsed.labels ?? _paragraphKeys(parsed),
+      'groups': groups,
+    });
+  }
   return {
     'id': e.id,
     'title': e.title,
     'durationSec': (e.timeLimit > 0 ? e.timeLimit : 60) * 60,
-    'questionTypes': passages.map((p) => p['questionType']).toSet().toList(),
-    'passages': [
-      for (var i = 0; i < passages.length; i++)
-        {
-          'id': passages[i]['id'],
-          'headline': ((passages[i]['title'] as String?) ?? '').isEmpty ? 'Passage ${i + 1}' : passages[i]['title'],
-          'label': e.module == 'general' ? 'General Training' : 'Academic',
-          'passageNumber': i + 1,
-          'totalPassages': passages.length,
-          'paragraphs': ((passages[i]['text'] as String?) ?? '')
-              .split(RegExp(r'\n{2,}'))
-              .map((s) => s.trim())
-              .where((s) => s.isNotEmpty)
-              .toList(),
-          'groups': _studioGroups('${passages[i]['id']}', (passages[i]['questionType'] as String?) ?? 'short-answer',
-              _maps(passages[i]['questions']), counter),
-        },
-    ],
+    'questionTypes': {for (final p in out) for (final g in p['groups'] as List) (g as Map)['type']}.toList(),
+    'passages': out,
   };
 }
 
@@ -221,6 +324,7 @@ Passage _passage(Map<String, dynamic> p) => Passage(
       totalPassages: (p['totalPassages'] as num?)?.toInt() ?? 1,
       paragraphs:
           ((p['paragraphs'] as List?) ?? []).map((e) => '$e').toList(),
+      paragraphLabels: (p['paragraphLabels'] as List?)?.map((e) => '$e').toList(),
       groups: ((p['groups'] as List?) ?? [])
           .map((g) => _group(Map<String, dynamic>.from(g as Map)))
           .toList(),
