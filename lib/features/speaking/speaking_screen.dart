@@ -6,8 +6,8 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 import 'package:record/record.dart';
 import 'package:path_provider/path_provider.dart';
-import '../../mock/data.dart';
 import '../../models/models.dart';
+import '../../services/api_client.dart';
 import '../../services/exam_convert.dart';
 import '../../state/app_state.dart';
 import '../../state/auth_state.dart';
@@ -26,7 +26,10 @@ class _SpeakingScreenState extends State<SpeakingScreen> {
   bool _recording = false;
   int _elapsed = 0;
   Timer? _timer;
-  List<SpeakingPart> _parts = speakingParts; // local fallback until API loads
+  List<SpeakingPart> _parts = const []; // a random published speaking test, once loaded
+  String _examId = 'speaking';
+  bool _loading = true;
+  String? _loadError;
 
   final _rec = AudioRecorder();
   final Map<int, String> _clips = {}; // part index -> recorded file path
@@ -40,19 +43,33 @@ class _SpeakingScreenState extends State<SpeakingScreen> {
   }
 
   Future<void> _loadParts() async {
+    setState(() {
+      _loading = true;
+      _loadError = null;
+    });
     try {
       final list = await context.read<AuthState>().api.listExams(skill: 'speaking', status: 'published');
-      final runner = list.where((e) => e.format == 'runner').toList();
-      if (runner.isEmpty) return;
-      final parts = speakingPartsFromContent(runner.first.content);
-      if (parts.isNotEmpty && mounted) {
-        setState(() {
-          _parts = parts;
-          if (_part >= _parts.length) _part = 0;
-        });
-      }
-    } catch (_) {
-      /* keep the local fallback */
+      // A random published test — built-in or Content Studio — with at least one part.
+      final usable = list.where((e) => speakingPartsFromContent(runnerContent(e)).isNotEmpty).toList();
+      final pick = pickRandom(usable);
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        if (pick == null) {
+          _loadError = 'No speaking tests are published yet — check back soon.';
+          return;
+        }
+        _examId = pick.id;
+        _parts = speakingPartsFromContent(runnerContent(pick));
+        _part = 0;
+        _clips.clear();
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _loadError = e is ApiException ? e.message : 'Could not load a speaking test.';
+      });
     }
   }
 
@@ -122,7 +139,7 @@ class _SpeakingScreenState extends State<SpeakingScreen> {
         final url = await api.uploadMedia(File(path));
         parts.add({'number': _parts[i].number, 'prompt': _promptFor(_parts[i]), 'audioUrl': url});
       }
-      final res = await api.speakingFeedback(examId: 'speaking', parts: parts);
+      final res = await api.speakingFeedback(examId: _examId, parts: parts);
       if (mounted) setState(() => _result = res);
     } catch (_) {
       if (mounted) showToast(context, 'AI feedback is unavailable right now. Please try again.');
@@ -152,6 +169,24 @@ class _SpeakingScreenState extends State<SpeakingScreen> {
   @override
   Widget build(BuildContext context) {
     final locked = context.watch<AppState>().isLocked('speaking');
+    if (_loading || _parts.isEmpty) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Speaking practice')),
+        body: Center(
+          child: _loading
+              ? const CircularProgressIndicator()
+              : Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: EmptyStateView(
+                    icon: Icons.mic_none_rounded,
+                    title: 'No speaking practice yet',
+                    description: _loadError ?? 'No speaking tests are published yet.',
+                    action: FilledButton(onPressed: _loadParts, child: const Text('Retry')),
+                  ),
+                ),
+        ),
+      );
+    }
     final part = _parts[_part];
     final hasClip = _clips.containsKey(_part);
     return Scaffold(

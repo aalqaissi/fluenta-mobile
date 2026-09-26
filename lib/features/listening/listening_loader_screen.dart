@@ -33,13 +33,14 @@ class _ListeningLoaderScreenState extends State<ListeningLoaderScreen> {
       exam = await api.getExam(widget.examId!);
     } else {
       final list = await api.listExams(skill: 'listening', status: 'published');
-      final runners = list.where((e) => e.format == 'runner').toList();
-      if (runners.isEmpty) {
+      // A random published exam — built-in or Content Studio.
+      final pick = pickRandom(list);
+      if (pick == null) {
         throw ApiException(404, 'No listening exams are published yet.');
       }
-      exam = runners.first;
+      exam = pick;
     }
-    return (listeningExamFromContent(exam.content), exam.id);
+    return (listeningExamFromContent(runnerContent(exam)), exam.id);
   }
 
   @override

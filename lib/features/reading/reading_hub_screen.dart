@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../models/models.dart';
 import '../../services/api_client.dart';
+import '../../services/exam_convert.dart';
 import '../../state/auth_state.dart';
 import '../../theme/app_colors.dart';
 import '../../widgets/ui.dart';
@@ -15,6 +16,7 @@ class ReadingHubScreen extends StatefulWidget {
 
 class _ReadingHubScreenState extends State<ReadingHubScreen> {
   late Future<List<ExamDto>> _future;
+  ExamDto? _featured; // random pick, stable until the list reloads or the student shuffles
 
   @override
   void initState() {
@@ -22,14 +24,16 @@ class _ReadingHubScreenState extends State<ReadingHubScreen> {
     _future = _load();
   }
 
+  /// Every published reading exam — built-in and Content Studio alike.
   Future<List<ExamDto>> _load() async {
     final list = await context.read<AuthState>().api.listExams(skill: 'reading', status: 'published');
-    return list.where((e) => e.format == 'runner').toList();
+    _featured = pickRandom(list, avoid: _featured);
+    return list;
   }
 
   int _questionCount(ExamDto e) {
     var n = 0;
-    for (final p in (e.content['passages'] as List? ?? [])) {
+    for (final p in (runnerContent(e)['passages'] as List? ?? [])) {
       for (final g in ((p as Map)['groups'] as List? ?? [])) {
         n += ((g as Map)['questions'] as List? ?? []).length;
       }
@@ -67,33 +71,42 @@ class _ReadingHubScreenState extends State<ReadingHubScreen> {
             );
           }
           final exams = snap.data!;
-          final featured = exams.first;
-          return ListView(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-            children: [
-              _featured(featured),
-              if (exams.length > 1) ...[
-                const SizedBox(height: 20),
-                const SectionHeader('More reading sets'),
-                for (final e in exams.skip(1)) _row(e),
+          final featured = _featured != null && exams.contains(_featured) ? _featured! : exams.first;
+          return RefreshIndicator(
+            onRefresh: () async {
+              final next = _load();
+              setState(() => _future = next);
+              await next;
+            },
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+              children: [
+                _featuredCard(featured, canShuffle: exams.length > 1, onShuffle: () => setState(() => _featured = pickRandom(exams, avoid: featured))),
+                if (exams.length > 1) ...[
+                  const SizedBox(height: 20),
+                  const SectionHeader('More reading tests'),
+                  for (final e in exams.where((e) => e != featured)) _row(e),
+                ],
               ],
-            ],
+            ),
           );
         },
       ),
     );
   }
 
-  Widget _featured(ExamDto e) {
+  Widget _featuredCard(ExamDto e, {required bool canShuffle, required VoidCallback onShuffle}) {
     final qs = _questionCount(e);
-    final mins = ((e.content['durationSec'] as num?)?.toInt() ?? 3600) ~/ 60;
+    final content = runnerContent(e);
+    final mins = ((content['durationSec'] as num?)?.toInt() ?? 3600) ~/ 60;
+    final passages = (content['passages'] as List?)?.length ?? 0;
     return FluentaCard(
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        const PillBadge('Featured set', color: AppColors.success, icon: Icons.menu_book_rounded),
+        const PillBadge('Picked for you', color: AppColors.success, icon: Icons.menu_book_rounded),
         const SizedBox(height: 8),
         Text(e.title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, height: 1.25)),
         const SizedBox(height: 6),
-        Text('${(e.content['passages'] as List?)?.length ?? 0} passages · $qs questions · covers True/False/Not Given, Matching, Completion and more.',
+        Text('$passages passage${passages == 1 ? '' : 's'} · $qs questions',
             style: const TextStyle(color: AppColors.mutedForeground, fontSize: 13)),
         const SizedBox(height: 12),
         Row(children: [
@@ -112,6 +125,17 @@ class _ReadingHubScreenState extends State<ReadingHubScreen> {
             label: const Text('Start reading exam'),
           ),
         ),
+        if (canShuffle) ...[
+          const SizedBox(height: 8),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: onShuffle,
+              icon: const Icon(Icons.shuffle_rounded),
+              label: const Text('Pick another'),
+            ),
+          ),
+        ],
       ]),
     );
   }
@@ -132,7 +156,7 @@ class _ReadingHubScreenState extends State<ReadingHubScreen> {
           Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text(e.title, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w800)),
-              Text('${(e.content['passages'] as List?)?.length ?? 0} passages · $qs questions',
+              Text('${(runnerContent(e)['passages'] as List?)?.length ?? 0} passages · $qs questions',
                   style: const TextStyle(color: AppColors.mutedForeground, fontSize: 12.5)),
             ]),
           ),

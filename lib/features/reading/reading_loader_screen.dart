@@ -33,13 +33,14 @@ class _ReadingLoaderScreenState extends State<ReadingLoaderScreen> {
       exam = await api.getExam(widget.examId!);
     } else {
       final list = await api.listExams(skill: 'reading', status: 'published');
-      final runners = list.where((e) => e.format == 'runner').toList();
-      if (runners.isEmpty) {
+      // A random published exam — built-in or Content Studio.
+      final pick = pickRandom(list);
+      if (pick == null) {
         throw ApiException(404, 'No reading exams are published yet.');
       }
-      exam = runners.first;
+      exam = pick;
     }
-    return (readingExamFromContent(exam.content), exam.id);
+    return (readingExamFromContent(runnerContent(exam)), exam.id);
   }
 
   @override
