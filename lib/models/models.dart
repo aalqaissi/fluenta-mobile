@@ -421,17 +421,21 @@ class AttemptRequest {
   final String skill;
   final Map<String, String> answers;
   final int durationUsedSec;
+  /// 'practice' or 'exam' (Full Exam conditions) — stored on the attempt.
+  final String mode;
   const AttemptRequest({
     required this.examId,
     required this.skill,
     required this.answers,
     required this.durationUsedSec,
+    this.mode = 'practice',
   });
   Map<String, dynamic> toJson() => {
         'examId': examId,
         'skill': skill,
         'answers': answers,
         'durationUsedSec': durationUsedSec,
+        'mode': mode,
       };
 }
 

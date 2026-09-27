@@ -5,19 +5,22 @@ import '../../theme/app_colors.dart';
 import '../../utils/format.dart';
 import '../../widgets/ui.dart';
 
-/// Play-once section audio. Streams a real clip when [audioUrl] is set; otherwise
+/// Section audio: play-once under exam conditions ([playOnce]), replayable in practice. Streams a real clip when [audioUrl] is set; otherwise
 /// falls back to a simulated timer (no sound), preserving the prototype behavior.
 class SectionAudioPlayer extends StatefulWidget {
   final String? audioUrl; // fully-resolved URL (mediaBase + path), or null
   final int durationSec;
   final bool alreadyPlayed;
   final VoidCallback onCompleted;
+  /// Exam mode: the recording plays once. Practice: it can be replayed.
+  final bool playOnce;
   const SectionAudioPlayer({
     super.key,
     required this.audioUrl,
     required this.durationSec,
     required this.alreadyPlayed,
     required this.onCompleted,
+    this.playOnce = true,
   });
 
   @override
@@ -41,8 +44,8 @@ class _SectionAudioPlayerState extends State<SectionAudioPlayer> {
   @override
   void initState() {
     super.initState();
-    _played = widget.alreadyPlayed;
-    if (_isReal && !widget.alreadyPlayed) _initReal();
+    _played = widget.playOnce && widget.alreadyPlayed;
+    if (_isReal && !_played) _initReal();
   }
 
   Future<void> _initReal() async {
@@ -55,7 +58,7 @@ class _SectionAudioPlayerState extends State<SectionAudioPlayer> {
       if (!mounted) return;
       if (st.processingState == ProcessingState.completed) {
         if (_played) return;
-        setState(() { _playing = false; _played = true; });
+        setState(() { _playing = false; _played = widget.playOnce; });
         p.pause();
         p.seek(Duration.zero);
         widget.onCompleted();
@@ -87,7 +90,7 @@ class _SectionAudioPlayerState extends State<SectionAudioPlayer> {
       if (!mounted) return;
       if (_t >= _total) {
         _simTimer?.cancel();
-        setState(() { _playing = false; _played = true; });
+        setState(() { _playing = false; _played = widget.playOnce; });
         widget.onCompleted();
       } else {
         setState(() => _t++);
@@ -157,11 +160,13 @@ class _SectionAudioPlayerState extends State<SectionAudioPlayer> {
         const SizedBox(height: 8),
         Text(
           _error ??
-              (_played
-                  ? 'Audio played. In the real test each section plays once.'
-                  : _isReal
-                      ? 'The audio plays once.'
-                      : 'The audio plays once — playback is simulated in this preview.'),
+              (!widget.playOnce
+                  ? 'Practice mode — replay the audio as often as you like.'
+                  : _played
+                      ? 'Audio played. In the real test each section plays once.'
+                      : _isReal
+                          ? 'The audio plays once.'
+                          : 'The audio plays once — playback is simulated in this preview.'),
           style: const TextStyle(fontSize: 11.5, color: AppColors.mutedForeground),
         ),
       ]),

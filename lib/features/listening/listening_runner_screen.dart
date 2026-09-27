@@ -40,7 +40,12 @@ class _ListeningRunnerScreenState extends State<ListeningRunnerScreen> {
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (!mounted) return;
       if (_timeLeft <= 0) {
-        _submit();
+        // exam conditions auto-submit; practice just lets the clock run out
+        if (widget.full) {
+          _submit();
+        } else {
+          _timer?.cancel();
+        }
       } else {
         setState(() => _timeLeft--);
       }
@@ -81,6 +86,7 @@ class _ListeningRunnerScreenState extends State<ListeningRunnerScreen> {
             skill: 'listening',
             answers: _answers,
             durationUsedSec: used,
+            mode: widget.full ? 'exam' : 'practice',
           ));
       AttemptStore.lastListening = ReadingAttempt(
         answers: _answers,
@@ -193,6 +199,7 @@ class _ListeningRunnerScreenState extends State<ListeningRunnerScreen> {
                 durationSec: _section.audioDurationSec,
                 alreadyPlayed: _played.contains(_sIdx),
                 onCompleted: () => setState(() => _played.add(_sIdx)),
+                playOnce: widget.full, // full exam = exam conditions; practice replays
               ),
               const SizedBox(height: 14),
               Text(_section.context, style: const TextStyle(fontWeight: FontWeight.w700)),
