@@ -197,6 +197,7 @@ List<Map<String, dynamic>> _studioGroups(
       'prompt': (q['prompt'] as String?) ?? '',
       'correct': (q['answer'] as String?) ?? '',
       if (limit != null && limit > 0 && _wordLimitTypes.contains(kind)) 'wordLimit': 'Max $limit word${limit == 1 ? '' : 's'}',
+      if (_wordLimitTypes.contains(kind) && q['accepted'] is List) 'accepted': q['accepted'],
       if (kind == 'multiple-choice')
         'options': [
           for (var i = 0; i < options.length && i < _letters.length; i++)
@@ -387,6 +388,7 @@ Question _question(Map<String, dynamic> q) => Question(
       prompt: (q['prompt'] as String?) ?? '',
       correct: '${q['correct'] ?? ''}',
       wordLimit: q['wordLimit'] as String?,
+      accepted: [for (final a in (q['accepted'] as List?) ?? const []) '$a'],
       options: _options(q['options']),
     );
 

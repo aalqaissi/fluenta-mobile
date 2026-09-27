@@ -52,6 +52,23 @@ extension QuestionTypeLabel on QuestionType {
       };
 }
 
+extension QuestionTypeWire on QuestionType {
+  /// The backend's kebab-case key (inverse of [questionTypeFromKey]; multi-select folds into MC).
+  String get wireKey => switch (this) {
+        QuestionType.trueFalseNotGiven => 'true-false-notgiven',
+        QuestionType.yesNoNotGiven => 'yes-no-notgiven',
+        QuestionType.multipleChoice => 'multiple-choice',
+        QuestionType.matchingInformation => 'matching-information',
+        QuestionType.matchingHeadings => 'matching-headings',
+        QuestionType.matchingFeatures => 'matching-features',
+        QuestionType.matchingSentenceEndings => 'matching-sentence-endings',
+        QuestionType.sentenceCompletion => 'sentence-completion',
+        QuestionType.summaryCompletion => 'summary-completion',
+        QuestionType.diagramLabel => 'diagram-label',
+        QuestionType.shortAnswer => 'short-answer',
+      };
+}
+
 /// Parse the backend's kebab-case type string (e.g. "true-false-notgiven").
 QuestionType questionTypeFromKey(String? key) {
   switch (key) {
@@ -597,6 +614,8 @@ class Question {
   final String prompt;
   final String correct;
   final String? wordLimit;
+  /// Extra accepted answers (spelling variants, "(optional)" words) — see utils/answer_match.dart.
+  final List<String> accepted;
   final List<QuestionOption>? options; // for multiple choice (per-question)
   const Question({
     required this.id,
@@ -604,6 +623,7 @@ class Question {
     required this.prompt,
     required this.correct,
     this.wordLimit,
+    this.accepted = const [],
     this.options,
   });
 }
