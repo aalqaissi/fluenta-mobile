@@ -121,7 +121,7 @@ void main() {
       final g = readingExamFromContent(runnerContent(endings(options: ['fast feedback.', 'a formula.', '']))).passages[0].groups.single;
       expect(g.type, QuestionType.matchingSentenceEndings);
       expect(g.sharedOptions!.map((o) => '${o.key}:${o.text}'), ['A:fast feedback.', 'B:a formula.']);
-      expect(g.instructions, contains('ending'));
+      expect(g.instructions, 'Complete each sentence with the correct ending, A–B.');
     });
 
     test('without an authored list, offers the letters used in the answers', () {
