@@ -48,7 +48,7 @@ class _WritingResultsScreenState extends State<WritingResultsScreen> {
           FluentaCard(
             child: Column(children: [
               Row(children: [
-                ProgressRing(value: result.overall / 9, size: 92, stroke: 10, label: formatBand(result.overall), sublabel: 'overall'),
+                ProgressRing(value: result.overall / 9, size: 92, stroke: 10, label: formatBand(result.overall), sublabel: 'estimated'),
                 const SizedBox(width: 16),
                 Expanded(
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -56,6 +56,11 @@ class _WritingResultsScreenState extends State<WritingResultsScreen> {
                     const SizedBox(height: 6),
                     const Text('Your writing, reviewed', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
                     Text('$wordCount words · scored on all four criteria.', style: const TextStyle(color: AppColors.mutedForeground, fontSize: 13)),
+                    const Text('Estimated IELTS band — not an official result.', style: TextStyle(color: AppColors.mutedForeground, fontSize: 11.5, fontWeight: FontWeight.w600)),
+                    if (result.essayType != null) ...[
+                      const SizedBox(height: 4),
+                      PillBadge('Essay type: ${_essayTypeLabel[result.essayType] ?? result.essayType}', color: AppColors.mutedForeground),
+                    ],
                   ]),
                 ),
               ]),
@@ -140,6 +145,10 @@ class _WritingResultsScreenState extends State<WritingResultsScreen> {
                     )),
             ]),
           ),
+          if (result.coaching.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            _CoachingCard(notes: result.coaching),
+          ],
           const SizedBox(height: 16),
 
           GradientCard(
@@ -200,6 +209,63 @@ class _WritingResultsScreenState extends State<WritingResultsScreen> {
           ),
         );
       }).toList(),
+    );
+  }
+}
+
+const _essayTypeLabel = {
+  'opinion': 'Opinion (agree / disagree)',
+  'extent': 'Opinion (to what extent)',
+  'discussion': 'Discussion (both views)',
+  'adv-disadv': 'Advantages & disadvantages',
+  'outweigh': 'Advantages outweigh disadvantages',
+  'problem-solution': 'Problems & solutions',
+  'cause-solution': 'Causes & solutions',
+  'two-part': 'Two-part question',
+  'other': 'Other / mixed',
+};
+
+/// The Yalla teaching layer — shown apart from the IELTS criteria because it never changes a band.
+class _CoachingCard extends StatelessWidget {
+  final List<CoachingNote> notes;
+  const _CoachingCard({required this.notes});
+
+  @override
+  Widget build(BuildContext context) {
+    return FluentaCard(
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        const Row(children: [
+          Icon(Icons.school_rounded, color: AppColors.primary),
+          SizedBox(width: 8),
+          Text('Yalla strategy coaching', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15.5)),
+        ]),
+        const SizedBox(height: 4),
+        const Text("Teaching recommendations from the Yalla method — they don't change your IELTS criterion bands.",
+            style: TextStyle(color: AppColors.mutedForeground, fontSize: 12)),
+        const SizedBox(height: 10),
+        ...notes.map((n) {
+          final (label, icon, color) = switch (n.status) {
+            'good' => ('Working well', Icons.check_circle_rounded, AppColors.success),
+            'improve' => ('To improve', Icons.warning_amber_rounded, AppColors.destructive),
+            _ => ('Strategy tip', Icons.lightbulb_rounded, AppColors.primary),
+          };
+          return Container(
+            margin: const EdgeInsets.only(bottom: 10),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(border: Border.all(color: AppColors.border), borderRadius: BorderRadius.circular(12)),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Row(children: [
+                Expanded(child: Text(n.title, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5))),
+                Icon(icon, size: 15, color: color),
+                const SizedBox(width: 4),
+                Text(label.toUpperCase(), style: TextStyle(color: color, fontSize: 10.5, fontWeight: FontWeight.w800)),
+              ]),
+              const SizedBox(height: 4),
+              Text(n.note, style: const TextStyle(fontSize: 13, color: AppColors.mutedForeground)),
+            ]),
+          );
+        }),
+      ]),
     );
   }
 }

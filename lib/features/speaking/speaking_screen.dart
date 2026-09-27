@@ -373,7 +373,7 @@ class _SpeakingScreenState extends State<SpeakingScreen> {
             FluentaCard(
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Row(children: [
-                  ProgressRing(value: _result!.overall / 9, size: 92, stroke: 10, label: formatBand(_result!.overall), sublabel: 'overall'),
+                  ProgressRing(value: _result!.overall / 9, size: 92, stroke: 10, label: formatBand(_result!.overall), sublabel: 'estimated'),
                   const SizedBox(width: 16),
                   Expanded(
                     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
