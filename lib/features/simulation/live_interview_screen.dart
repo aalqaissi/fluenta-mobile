@@ -303,7 +303,7 @@ class _LiveInterviewScreenState extends State<LiveInterviewScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(children: [
-            ProgressRing(value: r.overall / 9, size: 92, stroke: 10, label: formatBand(r.overall), sublabel: 'overall'),
+            ProgressRing(value: r.overall / 9, size: 92, stroke: 10, label: formatBand(r.overall), sublabel: 'estimated'),
             const SizedBox(width: 16),
             Expanded(
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [

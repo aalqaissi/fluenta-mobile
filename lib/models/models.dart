@@ -736,18 +736,32 @@ class WritingAnnotation {
   const WritingAnnotation(this.criterion, this.quote, this.note);
 }
 
+/// A Yalla teaching-strategy note — separate from the IELTS criteria; never changes a band.
+class CoachingNote {
+  final String key;
+  final String title;
+  final String status; // good | improve | tip
+  final String note;
+  const CoachingNote(this.key, this.title, this.status, this.note);
+}
+
+/// An ESTIMATED IELTS writing result (not an official IELTS/Cambridge result).
 class WritingResult {
   final double overall;
   final int wordCount;
   final String answer;
   final List<WritingCriterion> criteria;
   final List<WritingAnnotation> annotations;
+  final String? essayType; // Task 2 only
+  final List<CoachingNote> coaching;
   const WritingResult({
     required this.overall,
     required this.wordCount,
     required this.answer,
     required this.criteria,
     required this.annotations,
+    this.essayType,
+    this.coaching = const [],
   });
 
   factory WritingResult.fromJson(Map<String, dynamic> j) => WritingResult(
@@ -767,6 +781,15 @@ class WritingResult {
                   writingCriterionKeyFromString(a['criterion'] as String?),
                   (a['quote'] as String?) ?? '',
                   (a['note'] as String?) ?? '',
+                ))
+            .toList(),
+        essayType: j['essayType'] as String?,
+        coaching: ((j['coaching'] as List?) ?? const [])
+            .map((c) => CoachingNote(
+                  (c['key'] as String?) ?? '',
+                  (c['title'] as String?) ?? '',
+                  (c['status'] as String?) ?? 'tip',
+                  (c['note'] as String?) ?? '',
                 ))
             .toList(),
       );
