@@ -53,7 +53,8 @@ class _ReadingRunnerScreenState extends State<ReadingRunnerScreen> {
   @override
   void initState() {
     super.initState();
-    _timeLeft = exam.durationSec;
+    // Full Exam: the IELTS 60-minute limit; practice uses the authored time and never auto-submits.
+    _timeLeft = widget.full ? 60 * 60 : exam.durationSec;
     _startTimer();
   }
 
@@ -62,7 +63,11 @@ class _ReadingRunnerScreenState extends State<ReadingRunnerScreen> {
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (!mounted) return;
       if (_timeLeft <= 0) {
-        _submit();
+        if (widget.full) {
+          _submit();
+        } else {
+          _timer?.cancel();
+        }
       } else {
         setState(() => _timeLeft--);
       }
@@ -85,7 +90,7 @@ class _ReadingRunnerScreenState extends State<ReadingRunnerScreen> {
     if (_submitting) return;
     setState(() => _submitting = true);
     _timer?.cancel();
-    final used = exam.durationSec - _timeLeft;
+    final used = (widget.full ? 60 * 60 : exam.durationSec) - _timeLeft;
     final api = context.read<AuthState>().api;
     try {
       final dto = await api.submitAttempt(AttemptRequest(
@@ -93,6 +98,7 @@ class _ReadingRunnerScreenState extends State<ReadingRunnerScreen> {
         skill: 'reading',
         answers: _answers,
         durationUsedSec: used,
+        mode: widget.full ? 'exam' : 'practice',
       ));
       AttemptStore.lastReading = ReadingAttempt(
         answers: _answers,
