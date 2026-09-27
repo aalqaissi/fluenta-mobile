@@ -34,6 +34,10 @@ enum QuestionType {
   summaryCompletion,
   diagramLabel,
   shortAnswer,
+  noteCompletion,
+  tableCompletion,
+  flowChartCompletion,
+  formCompletion,
 }
 
 extension QuestionTypeLabel on QuestionType {
@@ -49,6 +53,10 @@ extension QuestionTypeLabel on QuestionType {
         QuestionType.summaryCompletion => 'Summary Completion',
         QuestionType.diagramLabel => 'Diagram Label Completion',
         QuestionType.shortAnswer => 'Short Answer',
+        QuestionType.noteCompletion => 'Note Completion',
+        QuestionType.tableCompletion => 'Table Completion',
+        QuestionType.flowChartCompletion => 'Flow-chart Completion',
+        QuestionType.formCompletion => 'Form Completion',
       };
 }
 
@@ -66,6 +74,10 @@ extension QuestionTypeWire on QuestionType {
         QuestionType.summaryCompletion => 'summary-completion',
         QuestionType.diagramLabel => 'diagram-label',
         QuestionType.shortAnswer => 'short-answer',
+        QuestionType.noteCompletion => 'note-completion',
+        QuestionType.tableCompletion => 'table-completion',
+        QuestionType.flowChartCompletion => 'flow-chart-completion',
+        QuestionType.formCompletion => 'form-completion',
       };
 }
 
@@ -95,6 +107,14 @@ QuestionType questionTypeFromKey(String? key) {
       return QuestionType.diagramLabel;
     case 'short-answer':
       return QuestionType.shortAnswer;
+    case 'note-completion':
+      return QuestionType.noteCompletion;
+    case 'table-completion':
+      return QuestionType.tableCompletion;
+    case 'flow-chart-completion':
+      return QuestionType.flowChartCompletion;
+    case 'form-completion':
+      return QuestionType.formCompletion;
     default:
       return QuestionType.sentenceCompletion;
   }
