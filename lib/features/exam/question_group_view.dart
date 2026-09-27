@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../models/models.dart';
 import '../../services/exam_convert.dart' show optionListTitle;
 import '../../theme/app_colors.dart';
+import '../../utils/answer_match.dart';
 
 const _choiceTypes = {QuestionType.trueFalseNotGiven, QuestionType.yesNoNotGiven};
 const _selectTypes = {
@@ -72,7 +73,9 @@ class QuestionGroupView extends StatelessWidget {
 
   Widget _questionCard(BuildContext context, Question q) {
     final val = answers[q.id] ?? '';
-    final correct = review ? val.trim().toLowerCase() == q.correct.trim().toLowerCase() : null;
+    final correct = review
+        ? answerMatches(val, AnswerKey(q.correct, accepted: q.accepted, wordLimit: q.wordLimit, type: group.type.wireKey))
+        : null;
     final borderColor = review
         ? (correct! ? AppColors.success : AppColors.destructive)
         : AppColors.border;
