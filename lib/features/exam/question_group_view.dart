@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../models/models.dart';
+import '../../services/exam_convert.dart' show optionListTitle;
 import '../../theme/app_colors.dart';
 
 const _choiceTypes = {QuestionType.trueFalseNotGiven, QuestionType.yesNoNotGiven};
@@ -46,7 +47,13 @@ class QuestionGroupView extends StatelessWidget {
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: group.sharedOptions!.map((o) => Padding(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 6),
+                  child: Text(optionListTitle(group.type).toUpperCase(),
+                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 0.5, color: AppColors.mutedForeground)),
+                ),
+                ...group.sharedOptions!.map((o) => Padding(
                     padding: const EdgeInsets.only(bottom: 4),
                     child: RichText(
                       text: TextSpan(style: const TextStyle(color: AppColors.foreground, fontSize: 13.5), children: [
@@ -54,7 +61,8 @@ class QuestionGroupView extends StatelessWidget {
                         TextSpan(text: o.text),
                       ]),
                     ),
-                  )).toList(),
+                  )),
+              ],
             ),
           ),
         ...group.questions.map((q) => _questionCard(context, q)),

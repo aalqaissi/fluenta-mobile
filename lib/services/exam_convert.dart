@@ -127,6 +127,27 @@ String _renderKind(String type, {required bool matching}) => switch (type) {
       _ => 'short-answer',
     };
 
+/// Title of the lettered list a matching type chooses from, as on the IELTS paper.
+String optionListTitle(QuestionType type) => switch (type) {
+      QuestionType.matchingSentenceEndings => 'Sentence endings',
+      QuestionType.matchingHeadings => 'List of headings',
+      QuestionType.matchingInformation => 'Paragraphs',
+      _ => 'List of options',
+    };
+
+/// IELTS-style matching instruction naming the letter range (mirrors the web app).
+String? _matchingInstructions(String kind, List<String>? keys) {
+  final r = keys == null || keys.isEmpty ? '' : (keys.length == 1 ? keys.first : '${keys.first}–${keys.last}');
+  final range = r.isEmpty ? '' : ', $r';
+  return switch (kind) {
+    'matching-sentence-endings' => 'Complete each sentence with the correct ending$range.',
+    'matching-headings' => 'Choose the correct heading for each paragraph from the list of headings${r.isEmpty ? '' : ' ($r)'}.',
+    'matching-features' => 'Match each statement with the correct option$range. You may use any letter more than once.',
+    'matching-information' => 'Which paragraph contains the following information? Write the correct letter$range. You may use any letter more than once.',
+    _ => null,
+  };
+}
+
 String _instructions(String kind) => switch (kind) {
       'true-false-notgiven' => 'Do the following statements agree with the information in the passage? Choose True, False or Not Given.',
       'yes-no-notgiven' => "Do the following statements agree with the writer's views? Choose Yes, No or Not Given.",
@@ -188,6 +209,10 @@ List<Map<String, dynamic>> _studioGroups(
     final first = (qs.first as Map)['number'];
     final last = (qs.last as Map)['number'];
     g['rangeLabel'] = first == last ? 'Question $first' : 'Questions $first–$last';
+    // Matching groups name their letter range ("…with the correct ending, A–H."), as on the paper.
+    final shared = g['sharedOptions'] as List?;
+    final ranged = _matchingInstructions('${g['type']}', shared == null ? null : [for (final o in shared) '${(o as Map)['key']}']);
+    if (ranged != null) g['instructions'] = ranged;
   }
   return groups;
 }
