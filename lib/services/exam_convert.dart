@@ -24,7 +24,10 @@ Map<String, dynamic> runnerContent(ExamDto e) {
 }
 
 const _letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'];
-const _wordLimitTypes = {'sentence-completion', 'summary-completion', 'short-answer', 'diagram-label'};
+const _wordLimitTypes = {
+  'sentence-completion', 'summary-completion', 'short-answer', 'diagram-label',
+  'note-completion', 'table-completion', 'flow-chart-completion', 'form-completion',
+};
 /// Matching types answered from a lettered list the admin writes in the Studio.
 const _authoredOptionTypes = {'matching-headings', 'matching-features', 'matching-sentence-endings'};
 /// Matching types answered with the passage's paragraph letters.

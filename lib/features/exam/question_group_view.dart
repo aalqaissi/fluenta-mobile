@@ -16,6 +16,10 @@ const _textTypes = {
   QuestionType.summaryCompletion,
   QuestionType.shortAnswer,
   QuestionType.diagramLabel,
+  QuestionType.noteCompletion,
+  QuestionType.tableCompletion,
+  QuestionType.flowChartCompletion,
+  QuestionType.formCompletion,
 };
 
 class QuestionGroupView extends StatelessWidget {
