@@ -21,8 +21,6 @@ class _FullExamResultsScreenState extends State<FullExamResultsScreen> {
   Future<void> _generateCertificate(double overall) async {
     final app = context.read<AppState>();
     final api = context.read<AuthState>().api;
-    final l = FullExamStore.bands['listening'];
-    final r = FullExamStore.bands['reading'];
     setState(() => _issuing = true);
     try {
       await api.createCertificate({
@@ -33,15 +31,12 @@ class _FullExamResultsScreenState extends State<FullExamResultsScreen> {
         'centre': 'Online Practice',
         'issuedOn': DateTime.now().toIso8601String().split('T').first,
         'scores': {
-          'listening': l ?? overall,
-          'reading': r ?? overall,
-          'writing': overall,
-          'speaking': overall,
+          for (final k in FullExamStore.order) k: FullExamStore.bands[k] ?? overall,
         },
         'overall': overall,
         'cefr': cefrForBand(overall),
         'comments':
-            'Practice Test Report. Listening & Reading are auto-scored; Writing & Speaking are estimates (AI grading coming soon).',
+            'Practice Test Report. Listening & Reading are answer-key scored; Writing & Speaking are estimated IELTS bands (not an official result).',
         'status': 'issued',
       });
       if (!mounted) return;
@@ -68,7 +63,7 @@ class _FullExamResultsScreenState extends State<FullExamResultsScreen> {
               child: EmptyStateView(
                 icon: Icons.emoji_events_outlined,
                 title: 'No results yet',
-                description: 'Complete the Listening and Reading sections to see your combined band.',
+                description: 'Complete all four sections to see your combined band.',
               ),
             )
           : ListView(
@@ -86,7 +81,7 @@ class _FullExamResultsScreenState extends State<FullExamResultsScreen> {
                       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                         const Text('Mock exam complete', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w800)),
                         const SizedBox(height: 4),
-                        Text('CEFR ${cefrForBand(overall)} · scored from Listening & Reading',
+                        Text('CEFR ${cefrForBand(overall)} · estimated from all four sections',
                             style: const TextStyle(color: Colors.white70, fontSize: 12.5)),
                       ]),
                     ),
@@ -94,10 +89,10 @@ class _FullExamResultsScreenState extends State<FullExamResultsScreen> {
                 ),
                 const SizedBox(height: 16),
                 const SectionHeader('By section'),
-                _skillRow('Listening', 'listening', scored: true),
-                _skillRow('Reading', 'reading', scored: true),
-                _skillRow('Writing', 'writing', scored: false),
-                _skillRow('Speaking', 'speaking', scored: false),
+                _skillRow('Listening', 'listening'),
+                _skillRow('Reading', 'reading'),
+                _skillRow('Writing', 'writing'),
+                _skillRow('Speaking', 'speaking'),
                 const SizedBox(height: 16),
                 SizedBox(
                   width: double.infinity,
@@ -123,7 +118,7 @@ class _FullExamResultsScreenState extends State<FullExamResultsScreen> {
     );
   }
 
-  Widget _skillRow(String label, String key, {required bool scored}) {
+  Widget _skillRow(String label, String key) {
     final band = FullExamStore.bands[key];
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
@@ -141,10 +136,8 @@ class _FullExamResultsScreenState extends State<FullExamResultsScreen> {
           if (band != null)
             Text('Band ${formatBand(band)}',
                 style: TextStyle(fontWeight: FontWeight.w800, color: AppColors.bandTone(band)))
-          else if (scored)
-            const Text('Not taken', style: TextStyle(color: AppColors.mutedForeground, fontSize: 12.5))
           else
-            const PillBadge('AI soon', color: AppColors.mutedForeground),
+            const Text('Not taken', style: TextStyle(color: AppColors.mutedForeground, fontSize: 12.5)),
         ]),
       ),
     );

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import '../../widgets/mode_picker.dart';
 import '../../models/models.dart';
 import '../../services/api_client.dart';
 import '../../services/exam_convert.dart';
@@ -135,7 +135,7 @@ class _ReadingHubScreenState extends State<ReadingHubScreen> {
         SizedBox(
           width: double.infinity,
           child: FilledButton.icon(
-            onPressed: () => context.push('/exam/reading?id=${e.id}'),
+            onPressed: () => pushWithMode(context, '/exam/reading?id=${e.id}'),
             icon: const Icon(Icons.play_arrow_rounded),
             label: const Text('Start reading exam'),
           ),
@@ -160,7 +160,7 @@ class _ReadingHubScreenState extends State<ReadingHubScreen> {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: FluentaCard(
-        onTap: () => context.push('/exam/reading?id=${e.id}'),
+        onTap: () => pushWithMode(context, '/exam/reading?id=${e.id}'),
         child: Row(children: [
           Container(
             width: 44, height: 44,

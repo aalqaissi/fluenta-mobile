@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import '../../widgets/mode_picker.dart';
 import '../../state/app_state.dart';
 import '../../theme/app_colors.dart';
 import '../../widgets/ui.dart';
@@ -44,6 +45,8 @@ class PracticeHubScreen extends StatelessWidget {
                   if (it.soon) {
                     showToast(context, '${it.title} practice is coming soon',
                         description: 'Tracked on your dashboard for now.');
+                  } else if (it.route == '/listening' || it.route == '/speaking') {
+                    pushWithMode(context, it.route); // practice vs exam conditions
                   } else {
                     context.push(it.route);
                   }

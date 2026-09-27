@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import 'state/auth_state.dart';
+import 'utils/exam_mode.dart';
 import 'features/bootstrap/splash_screen.dart';
 import 'features/bootstrap/offline_screen.dart';
 import 'features/onboarding/onboarding_screen.dart';
@@ -82,9 +83,13 @@ GoRouter buildRouter(AuthState auth) {
           path: '/listening',
           builder: (c, s) => ListeningLoaderScreen(
               examId: s.uri.queryParameters['id'],
-              full: s.uri.queryParameters['full'] == '1')),
+              full: s.uri.queryParameters['full'] == '1',
+              mode: modeFromQuery(s.uri.queryParameters))),
       GoRoute(path: '/results/listening', builder: (c, s) => const ListeningResultsScreen()),
-      GoRoute(path: '/speaking', builder: (c, s) => const SpeakingScreen()),
+      GoRoute(
+          path: '/speaking',
+          builder: (c, s) => SpeakingScreen(
+              full: s.uri.queryParameters['full'] == '1', mode: modeFromQuery(s.uri.queryParameters))),
       GoRoute(path: '/speaking/live-interview', builder: (c, s) => const LiveInterviewScreen()),
       GoRoute(path: '/full-exam', builder: (c, s) => const FullExamScreen()),
       GoRoute(path: '/results/full', builder: (c, s) => const FullExamResultsScreen()),
@@ -100,12 +105,17 @@ GoRouter buildRouter(AuthState auth) {
           path: '/exam/reading',
           builder: (c, s) => ReadingLoaderScreen(
               examId: s.uri.queryParameters['id'],
-              full: s.uri.queryParameters['full'] == '1')),
+              full: s.uri.queryParameters['full'] == '1',
+              mode: modeFromQuery(s.uri.queryParameters))),
       GoRoute(path: '/results/reading', builder: (c, s) => const ReadingResultsScreen()),
       GoRoute(
           path: '/exam/writing/:id',
           builder: (c, s) => WritingEditorScreen(
-              taskId: s.pathParameters['id']!, task: s.extra as WritingTask?)),
+              taskId: s.pathParameters['id']!,
+              task: s.extra as WritingTask?,
+              full: s.uri.queryParameters['full'] == '1',
+              mode: modeFromQuery(s.uri.queryParameters),
+              next: s.uri.queryParameters['next'])),
       GoRoute(path: '/results/writing/:id', builder: (c, s) => const WritingResultsScreen()),
     ],
   );

@@ -1,25 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import '../../mock/data.dart';
 import '../../state/app_state.dart';
 import '../../theme/app_colors.dart';
 import '../../utils/format.dart';
 import '../../widgets/ui.dart';
 import 'full_exam_store.dart';
 
-/// Full-exam orchestrator: runs the two objectively-scored sections (Listening,
-/// Reading) back-to-back in "full mode" (each records its band and returns here),
-/// then unlocks the combined results. Writing/Speaking are offered as extra
-/// practice (AI-graded — not scored yet).
-const _scored = [
-  ('listening', 'Listening', Icons.headphones_rounded, 30, '4 sections', '/listening?full=1', AppColors.secondary),
-  ('reading', 'Reading', Icons.menu_book_rounded, 60, '3 passages', '/exam/reading?full=1', AppColors.success),
-];
-const _extra = [
-  ('Writing', Icons.edit_rounded, 60, 'Task 1 & Task 2', AppColors.info),
-  ('Speaking', Icons.mic_rounded, 15, '3 parts', AppColors.primary),
+final _writingT1 = writingTasks.firstWhere((t) => t.taskNumber == 1, orElse: () => writingTasks.first).id;
+final _writingT2 = writingTasks.firstWhere((t) => t.taskNumber == 2, orElse: () => writingTasks.first).id;
+
+/// (key, label, icon, minutes, detail, color). Exam order is fixed — Listening → Reading → Writing →
+/// Speaking — and every section runs under exam conditions (`full=1`).
+final _sections = [
+  ('listening', 'Listening', Icons.headphones_rounded, 30, '4 parts · played once + 2-min check', AppColors.secondary),
+  ('reading', 'Reading', Icons.menu_book_rounded, 60, '3 passages · 60 minutes', AppColors.success),
+  ('writing', 'Writing', Icons.edit_rounded, 60, 'Task 1 (20 min) + Task 2 (40 min) · Task 2 counts double', AppColors.info),
+  ('speaking', 'Speaking', Icons.mic_rounded, 15, '3 parts · 1-min Part 2 preparation', AppColors.primary),
 ];
 
+/// Full-exam orchestrator (mirrors web `FullExamPage`): sections unlock strictly in order, no
+/// per-section retake (Reset restarts the whole run), then the combined results.
 class FullExamScreen extends StatefulWidget {
   const FullExamScreen({super.key});
   @override
@@ -27,21 +29,28 @@ class FullExamScreen extends StatefulWidget {
 }
 
 class _FullExamScreenState extends State<FullExamScreen> {
+  String _startRoute(String key) => switch (key) {
+        'listening' => '/listening?full=1',
+        'reading' => '/exam/reading?full=1',
+        // resume at Task 2 when Task 1 is already graded
+        'writing' => FullExamStore.has('writingT1')
+            ? '/exam/writing/$_writingT2?full=1'
+            : '/exam/writing/$_writingT1?full=1&next=$_writingT2',
+        _ => '/speaking?full=1',
+      };
+
   @override
   Widget build(BuildContext context) {
     final locked = context.watch<AppState>().isLocked('full-exam');
-    final doneCount = FullExamStore.scoredSkills.where(FullExamStore.has).length;
-    final allDone = FullExamStore.allScoredDone;
+    final doneCount = FullExamStore.order.where(FullExamStore.has).length;
+    final next = FullExamStore.next;
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Full IELTS exam'),
         actions: [
-          if (doneCount > 0)
-            TextButton(
-              onPressed: () => setState(FullExamStore.reset),
-              child: const Text('Reset'),
-            ),
+          if (doneCount > 0 || FullExamStore.has('writingT1'))
+            TextButton(onPressed: () => setState(FullExamStore.reset), child: const Text('Reset')),
         ],
       ),
       body: ListView(
@@ -60,7 +69,8 @@ class _FullExamScreenState extends State<FullExamScreen> {
                 const Expanded(
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                     Text('Complete mock exam', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w800)),
-                    Text('Sit the scored sections back-to-back, then get a combined band.', style: TextStyle(color: Colors.white70, fontSize: 12.5)),
+                    Text('All four sections in order, under exam conditions (about 2h 45m).',
+                        style: TextStyle(color: Colors.white70, fontSize: 12.5)),
                   ]),
                 ),
               ]),
@@ -68,21 +78,21 @@ class _FullExamScreenState extends State<FullExamScreen> {
               ClipRRect(
                 borderRadius: BorderRadius.circular(8),
                 child: LinearProgressIndicator(
-                  value: doneCount / FullExamStore.scoredSkills.length,
+                  value: doneCount / FullExamStore.order.length,
                   minHeight: 8,
                   backgroundColor: Colors.white24,
                   valueColor: const AlwaysStoppedAnimation(Colors.white),
                 ),
               ),
               const SizedBox(height: 6),
-              Text('$doneCount of ${FullExamStore.scoredSkills.length} scored sections complete',
+              Text('$doneCount of ${FullExamStore.order.length} sections complete',
                   style: const TextStyle(color: Colors.white70, fontSize: 12)),
             ]),
           ),
           const SizedBox(height: 16),
-          const SectionHeader('Scored sections'),
-          for (final s in _scored) _scoredCard(context, s),
-          if (allDone) ...[
+          const SectionHeader('Sections'),
+          for (final s in _sections) _card(context, s, next),
+          if (next == null) ...[
             const SizedBox(height: 8),
             SizedBox(
               width: double.infinity,
@@ -94,17 +104,16 @@ class _FullExamScreenState extends State<FullExamScreen> {
               ),
             ),
           ],
-          const SizedBox(height: 20),
-          const SectionHeader('Extra practice', subtitle: 'AI feedback is coming soon — not scored yet'),
-          for (final e in _extra) _extraCard(context, e),
         ],
       ),
     );
   }
 
-  Widget _scoredCard(BuildContext context, (String, String, IconData, int, String, String, Color) s) {
+  Widget _card(BuildContext context, (String, String, IconData, int, String, Color) s, String? next) {
     final band = FullExamStore.bands[s.$1];
     final done = band != null;
+    final isNext = next == s.$1;
+    final writingHalf = s.$1 == 'writing' && FullExamStore.has('writingT1') && !done;
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: FluentaCard(
@@ -112,8 +121,8 @@ class _FullExamScreenState extends State<FullExamScreen> {
         child: Row(children: [
           Container(
             width: 44, height: 44,
-            decoration: BoxDecoration(color: s.$7.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(12)),
-            child: Icon(s.$3, color: s.$7),
+            decoration: BoxDecoration(color: s.$6.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(12)),
+            child: Icon(s.$3, color: s.$6),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -122,52 +131,21 @@ class _FullExamScreenState extends State<FullExamScreen> {
                 Text(s.$2, style: const TextStyle(fontWeight: FontWeight.w800)),
                 const SizedBox(width: 8),
                 if (done) const Icon(Icons.check_circle, size: 16, color: AppColors.success),
+                if (isNext && !done) const PillBadge('Up next', color: AppColors.primary),
               ]),
-              Text('${s.$5} · ${s.$4}m', style: const TextStyle(fontSize: 12.5, color: AppColors.mutedForeground)),
+              Text(writingHalf ? 'Task 1 done · continue with Task 2' : '${s.$5} · ${s.$4}m',
+                  style: const TextStyle(fontSize: 12.5, color: AppColors.mutedForeground)),
             ]),
           ),
           if (done)
-            Column(children: [
-              Text('Band ${formatBand(band)}',
-                  style: TextStyle(fontWeight: FontWeight.w800, color: AppColors.bandTone(band))),
-              GestureDetector(
-                onTap: () => context.push(s.$6),
-                child: const Text('Retake', style: TextStyle(fontSize: 11.5, color: AppColors.primary)),
-              ),
-            ])
+            Text('Band ${formatBand(band)}', style: TextStyle(fontWeight: FontWeight.w800, color: AppColors.bandTone(band)))
           else
             FilledButton(
               style: FilledButton.styleFrom(minimumSize: const Size(0, 40), padding: const EdgeInsets.symmetric(horizontal: 16)),
-              onPressed: () => context.push(s.$6),
-              child: const Text('Start'),
+              // strict order: only the next section can be started; restart the whole run with Reset
+              onPressed: isNext ? () => context.push(_startRoute(s.$1)) : null,
+              child: Text(isNext ? (writingHalf ? 'Continue' : 'Start') : 'Locked'),
             ),
-        ]),
-      ),
-    );
-  }
-
-  Widget _extraCard(BuildContext context, (String, IconData, int, String, Color) e) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: FluentaCard(
-        padding: const EdgeInsets.all(14),
-        onTap: () => context.push('/${e.$1.toLowerCase()}'),
-        child: Row(children: [
-          Container(
-            width: 44, height: 44,
-            decoration: BoxDecoration(color: e.$5.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(12)),
-            child: Icon(e.$2, color: e.$5),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(e.$1, style: const TextStyle(fontWeight: FontWeight.w800)),
-              Text('${e.$4} · ${e.$3}m', style: const TextStyle(fontSize: 12.5, color: AppColors.mutedForeground)),
-            ]),
-          ),
-          const PillBadge('AI soon', color: AppColors.mutedForeground),
-          const SizedBox(width: 6),
-          const Icon(Icons.chevron_right_rounded, color: AppColors.mutedForeground),
         ]),
       ),
     );

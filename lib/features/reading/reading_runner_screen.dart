@@ -8,8 +8,9 @@ import '../../services/api_client.dart';
 import '../../services/mock_api.dart';
 import '../../state/auth_state.dart';
 import '../../theme/app_colors.dart';
-import '../../utils/format.dart';
 import '../../widgets/grading_overlay.dart';
+import '../../widgets/runner_timer.dart';
+import '../../utils/exam_mode.dart';
 import '../exam/question_group_view.dart';
 import '../full_exam/full_exam_store.dart';
 
@@ -32,7 +33,9 @@ class ReadingRunnerScreen extends StatefulWidget {
   final ReadingExam exam;
   final String examId;
   final bool full; // part of a full-exam session
-  const ReadingRunnerScreen({super.key, required this.exam, required this.examId, this.full = false});
+  final ExamMode mode;
+  const ReadingRunnerScreen(
+      {super.key, required this.exam, required this.examId, this.full = false, this.mode = ExamMode.practice});
   @override
   State<ReadingRunnerScreen> createState() => _ReadingRunnerScreenState();
 }
@@ -45,38 +48,25 @@ class _ReadingRunnerScreenState extends State<ReadingRunnerScreen> {
   final Map<String, String> _highlights = {};
   String? _activeColor;
   String _find = '';
-  late int _timeLeft;
   bool _submitting = false;
-  Timer? _timer;
+  late final RunnerTimer _timer;
   final List<TapGestureRecognizer> _recognizers = [];
 
   @override
   void initState() {
     super.initState();
-    // Full Exam: the IELTS 60-minute limit; practice uses the authored time and never auto-submits.
-    _timeLeft = widget.full ? 60 * 60 : exam.durationSec;
-    _startTimer();
-  }
-
-  void _startTimer() {
-    _timer?.cancel();
-    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (!mounted) return;
-      if (_timeLeft <= 0) {
-        if (widget.full) {
-          _submit();
-        } else {
-          _timer?.cancel();
-        }
-      } else {
-        setState(() => _timeLeft--);
-      }
-    });
+    // Exam: the IELTS 60-minute limit, mandatory, auto-submit (no transfer time).
+    // Practice: optional timer using the authored time limit.
+    _timer = RunnerTimer(
+      mode: widget.mode,
+      durationSec: widget.mode == ExamMode.exam ? ExamTiming.readingSec : exam.durationSec,
+      onExpire: _submit,
+    )..start();
   }
 
   @override
   void dispose() {
-    _timer?.cancel();
+    _timer.dispose();
     for (final r in _recognizers) {
       r.dispose();
     }
@@ -89,8 +79,8 @@ class _ReadingRunnerScreenState extends State<ReadingRunnerScreen> {
   Future<void> _submit() async {
     if (_submitting) return;
     setState(() => _submitting = true);
-    _timer?.cancel();
-    final used = (widget.full ? 60 * 60 : exam.durationSec) - _timeLeft;
+    _timer.stop();
+    final used = _timer.elapsed;
     final api = context.read<AuthState>().api;
     try {
       final dto = await api.submitAttempt(AttemptRequest(
@@ -98,7 +88,7 @@ class _ReadingRunnerScreenState extends State<ReadingRunnerScreen> {
         skill: 'reading',
         answers: _answers,
         durationUsedSec: used,
-        mode: widget.full ? 'exam' : 'practice',
+        mode: widget.mode.wire,
       ));
       AttemptStore.lastReading = ReadingAttempt(
         answers: _answers,
@@ -120,7 +110,7 @@ class _ReadingRunnerScreenState extends State<ReadingRunnerScreen> {
     } on ApiException catch (e) {
       if (!mounted) return;
       setState(() => _submitting = false);
-      _startTimer();
+      _timer.start();
       ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Could not submit: ${e.message}')));
     }
@@ -129,28 +119,15 @@ class _ReadingRunnerScreenState extends State<ReadingRunnerScreen> {
   @override
   Widget build(BuildContext context) {
     final passage = exam.passages[_pIdx];
-    final low = _timeLeft < 120;
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(icon: const Icon(Icons.arrow_back_rounded), onPressed: () => context.canPop() ? context.pop() : context.go('/')),
         titleSpacing: 0,
         title: const Text('Fluenta Reading', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
         actions: [
-          Center(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              decoration: BoxDecoration(
-                color: low ? AppColors.destructive.withValues(alpha: 0.1) : AppColors.muted,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Row(mainAxisSize: MainAxisSize.min, children: [
-                Icon(Icons.schedule_rounded, size: 15, color: low ? AppColors.destructive : AppColors.foreground),
-                const SizedBox(width: 4),
-                Text('${pad2(_timeLeft ~/ 60)}:${pad2(_timeLeft % 60)}',
-                    style: TextStyle(fontWeight: FontWeight.w800, color: low ? AppColors.destructive : AppColors.foreground)),
-              ]),
-            ),
-          ),
+          ModeBadge(widget.mode),
+          const SizedBox(width: 8),
+          Center(child: TimerChip(timer: _timer)),
           const SizedBox(width: 12),
         ],
       ),
