@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -7,14 +6,21 @@ import '../../models/models.dart';
 import '../../services/mock_api.dart';
 import '../../state/auth_state.dart';
 import '../../theme/app_colors.dart';
-import '../../utils/format.dart';
+import '../../utils/exam_mode.dart';
+import '../../widgets/runner_timer.dart';
+import '../full_exam/full_exam_store.dart';
 import '../../widgets/ui.dart';
 import 'visual_prompt.dart';
 
 class WritingEditorScreen extends StatefulWidget {
   final String taskId;
   final WritingTask? task;
-  const WritingEditorScreen({super.key, required this.taskId, this.task});
+  final ExamMode mode;
+  /// part of a full-exam session; [next] is the Task 2 id to continue to after Task 1
+  final bool full;
+  final String? next;
+  const WritingEditorScreen(
+      {super.key, required this.taskId, this.task, this.mode = ExamMode.practice, this.full = false, this.next});
   @override
   State<WritingEditorScreen> createState() => _WritingEditorScreenState();
 }
@@ -23,26 +29,58 @@ class _WritingEditorScreenState extends State<WritingEditorScreen> {
   late final WritingTask task =
       widget.task ?? writingTasks.firstWhere((t) => t.id == widget.taskId, orElse: () => writingTasks.first);
   final _controller = TextEditingController();
-  late int _timeLeft = task.durationSec;
-  Timer? _timer;
+  late final RunnerTimer _timer;
+  bool _submitting = false;
+
+  ExamMode get _mode => widget.full ? ExamMode.exam : widget.mode;
 
   @override
   void initState() {
     super.initState();
-    _timer = Timer.periodic(const Duration(seconds: 1), (_) => setState(() => _timeLeft = _timeLeft > 0 ? _timeLeft - 1 : 0));
+    // Exam: official task time (Task 1 20 min / Task 2 40 min), auto-submit at 0. Practice: optional timer.
+    _timer = RunnerTimer(
+      mode: _mode,
+      durationSec: _mode == ExamMode.exam
+          ? (task.taskNumber == 1 ? ExamTiming.writingTask1Sec : ExamTiming.writingTask2Sec)
+          : task.durationSec,
+      onExpire: _onTimeUp,
+    )..start();
   }
 
   @override
   void dispose() {
-    _timer?.cancel();
+    _timer.dispose();
     _controller.dispose();
     super.dispose();
+  }
+
+  void _onTimeUp() {
+    if (_submitting) return;
+    if (_controller.text.trim().isEmpty) {
+      _timer.stop();
+      showToast(context, 'Time is up — no answer was written for this task.');
+      if (widget.full) {
+        _afterFullTask(0);
+      } else {
+        context.canPop() ? context.pop() : context.go('/writing');
+      }
+    } else {
+      _submit();
+    }
+  }
+
+  /// Full exam: record this task's band, then continue to Task 2 or back to the orchestrator.
+  void _afterFullTask(double band) {
+    FullExamStore.record(task.taskNumber == 1 ? 'writingT1' : 'writingT2', band);
+    context.go(widget.next != null ? '/exam/writing/${widget.next}?full=1' : '/full-exam');
   }
 
   int get _words => _controller.text.trim().isEmpty ? 0 : _controller.text.trim().split(RegExp(r'\s+')).length;
 
   Future<void> _submit() async {
-    _timer?.cancel();
+    if (_submitting) return;
+    _submitting = true;
+    _timer.stop();
     final api = context.read<AuthState>().api;
     final essay = _controller.text;
     final words = _words;
@@ -78,33 +116,30 @@ class _WritingEditorScreenState extends State<WritingEditorScreen> {
     Navigator.of(context).pop(); // dismiss the loader
     AttemptStore.lastWriting =
         WritingAttempt(taskId: task.id, answer: essay, wordCount: words, result: result);
+    if (widget.full) {
+      if (result == null) {
+        // don't record a sample band as the student's grade — let them retry from the orchestrator
+        showToast(context, "We couldn't grade this task right now — try again from the full exam.");
+        context.go('/full-exam');
+      } else {
+        _afterFullTask(result.overall);
+      }
+      return;
+    }
     context.go('/results/writing/${task.id}');
   }
 
   @override
   Widget build(BuildContext context) {
     final enough = _words >= task.minWords;
-    final low = _timeLeft < 120;
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(icon: const Icon(Icons.arrow_back_rounded), onPressed: () => context.pop()),
         title: Text('Writing · Task ${task.taskNumber}'),
         actions: [
-          Container(
-            margin: const EdgeInsets.symmetric(vertical: 12),
-            padding: const EdgeInsets.symmetric(horizontal: 10),
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: low ? AppColors.destructive.withValues(alpha: 0.1) : AppColors.muted,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Row(mainAxisSize: MainAxisSize.min, children: [
-              Icon(Icons.schedule_rounded, size: 15, color: low ? AppColors.destructive : AppColors.foreground),
-              const SizedBox(width: 4),
-              Text('${pad2(_timeLeft ~/ 60)}:${pad2(_timeLeft % 60)}',
-                  style: TextStyle(fontWeight: FontWeight.w800, color: low ? AppColors.destructive : AppColors.foreground)),
-            ]),
-          ),
+          ModeBadge(_mode),
+          const SizedBox(width: 8),
+          Center(child: TimerChip(timer: _timer)),
           const SizedBox(width: 12),
         ],
       ),

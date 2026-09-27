@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import '../../widgets/mode_picker.dart';
 import '../../mock/data.dart';
 import '../../models/models.dart';
 import '../../services/writing_convert.dart';
@@ -74,7 +74,7 @@ class _WritingHubScreenState extends State<WritingHubScreen> {
               width: double.infinity,
               child: FilledButton.icon(
                 style: authored ? FilledButton.styleFrom(backgroundColor: AppColors.success) : null,
-                onPressed: () => context.push('/exam/writing/${t.id}', extra: t),
+                onPressed: () => pushWithMode(context, '/exam/writing/${t.id}', extra: t),
                 icon: const Icon(Icons.play_arrow_rounded),
                 label: Text(authored ? 'Take exam' : 'Start writing'),
               ),

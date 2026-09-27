@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import '../../widgets/mode_picker.dart';
 import '../../config/brand.dart';
 import '../../mock/data.dart';
 import '../../models/models.dart';
@@ -232,7 +233,9 @@ class _QuickStartGrid extends StatelessWidget {
         final locked = app.isLocked(it.$1);
         return FluentaCard(
           padding: const EdgeInsets.all(14),
-          onTap: () => context.push(it.$4),
+          onTap: () => it.$4 == '/listening' || it.$4 == '/speaking'
+              ? pushWithMode(context, it.$4) // practice vs exam conditions
+              : context.push(it.$4),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.spaceBetween,

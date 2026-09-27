@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../utils/exam_mode.dart';
 import '../../models/models.dart';
 import '../../services/api_client.dart';
 import '../../services/exam_convert.dart';
@@ -12,7 +13,8 @@ import 'listening_runner_screen.dart';
 class ListeningLoaderScreen extends StatefulWidget {
   final String? examId;
   final bool full;
-  const ListeningLoaderScreen({super.key, this.examId, this.full = false});
+  final ExamMode mode;
+  const ListeningLoaderScreen({super.key, this.examId, this.full = false, this.mode = ExamMode.practice});
   @override
   State<ListeningLoaderScreen> createState() => _ListeningLoaderScreenState();
 }
@@ -73,7 +75,7 @@ class _ListeningLoaderScreenState extends State<ListeningLoaderScreen> {
           );
         }
         final (exam, id) = snap.data!;
-        return ListeningRunnerScreen(exam: exam, examId: id, full: widget.full);
+        return ListeningRunnerScreen(exam: exam, examId: id, full: widget.full, mode: widget.full ? ExamMode.exam : widget.mode);
       },
     );
   }

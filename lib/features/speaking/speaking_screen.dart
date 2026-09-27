@@ -12,11 +12,18 @@ import '../../services/exam_convert.dart';
 import '../../state/app_state.dart';
 import '../../state/auth_state.dart';
 import '../../theme/app_colors.dart';
+import '../../utils/exam_mode.dart';
 import '../../utils/format.dart';
+import '../../widgets/runner_timer.dart';
+import '../full_exam/full_exam_store.dart';
 import '../../widgets/ui.dart';
 
 class SpeakingScreen extends StatefulWidget {
-  const SpeakingScreen({super.key});
+  /// Exam conditions (owner spec §6): Part 2 gets exactly 1 minute of preparation, the long turn stops
+  /// at 2 minutes, parts 1/3 cap at ~5 minutes, one recording per part. Practice is flexible.
+  final ExamMode mode;
+  final bool full; // part of a full-exam session
+  const SpeakingScreen({super.key, this.mode = ExamMode.practice, this.full = false});
   @override
   State<SpeakingScreen> createState() => _SpeakingScreenState();
 }
@@ -35,6 +42,17 @@ class _SpeakingScreenState extends State<SpeakingScreen> {
   final Map<int, String> _clips = {}; // part index -> recorded file path
   bool _submitting = false;
   SpeakingResult? _result;
+
+  // Part 2 preparation (exam: automatic 1 minute; practice: optional) + notes.
+  int? _prepLeft;
+  Timer? _prepTimer;
+  final Set<int> _prepDone = {};
+  final Map<int, TextEditingController> _notes = {};
+
+  bool get _isExam => widget.full || widget.mode == ExamMode.exam;
+  ExamMode get _mode => _isExam ? ExamMode.exam : ExamMode.practice;
+  int get _cap => ExamTiming.speakingCapSec(_parts[_part].number, _mode);
+  TextEditingController _notesFor(int i) => _notes.putIfAbsent(i, TextEditingController.new);
 
   @override
   void initState() {
@@ -64,6 +82,7 @@ class _SpeakingScreenState extends State<SpeakingScreen> {
         _part = 0;
         _clips.clear();
       });
+      _maybeAutoPrep();
     } catch (e) {
       if (!mounted) return;
       setState(() {
@@ -73,8 +92,48 @@ class _SpeakingScreenState extends State<SpeakingScreen> {
     }
   }
 
+  void _maybeAutoPrep() {
+    if (_isExam && _parts.isNotEmpty && _parts[_part].cueCard != null && !_clips.containsKey(_part) && !_prepDone.contains(_part)) {
+      _startPrep();
+    }
+  }
+
+  void _startPrep() {
+    _prepTimer?.cancel();
+    setState(() => _prepLeft = ExamTiming.speakingPrepSec);
+    _prepTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!mounted) return;
+      if ((_prepLeft ?? 0) <= 1) {
+        _finishPrep(record: _isExam); // exam: the long turn starts automatically
+      } else {
+        setState(() => _prepLeft = _prepLeft! - 1);
+      }
+    });
+  }
+
+  void _finishPrep({bool record = false}) {
+    if (_prepLeft == null) return;
+    _prepTimer?.cancel();
+    setState(() {
+      _prepLeft = null;
+      _prepDone.add(_part);
+    });
+    if (record && !_recording) _toggle();
+  }
+
+  /// The part's time limit stops the recording; under exam conditions move on to the next part.
+  Future<void> _stopAtCap() async {
+    if (!_recording) return;
+    await _toggle();
+    if (!mounted || !_isExam || _part >= _parts.length - 1) return;
+    showToast(context, 'Time is up for Part ${_parts[_part].number}.');
+    await Future.delayed(const Duration(milliseconds: 1200));
+    if (mounted) await _selectPart(_part + 1);
+  }
+
   Future<void> _toggle() async {
     if (_recording) {
+      _timer?.cancel();
       try {
         final path = await _rec.stop();
         if (!mounted) return;
@@ -90,6 +149,8 @@ class _SpeakingScreenState extends State<SpeakingScreen> {
       }
       return;
     }
+    if (_isExam && _clips.containsKey(_part)) return; // one recording per part under exam conditions
+    if (_prepLeft != null) _finishPrep();
     if (!await Permission.microphone.request().isGranted) {
       if (mounted) showToast(context, 'Microphone permission is needed to record.');
       return;
@@ -103,7 +164,11 @@ class _SpeakingScreenState extends State<SpeakingScreen> {
         _recording = true;
         _elapsed = 0;
       });
-      _timer = Timer.periodic(const Duration(seconds: 1), (_) => setState(() => _elapsed++));
+      _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+        if (!mounted) return;
+        setState(() => _elapsed++);
+        if (_elapsed >= _cap) _stopAtCap();
+      });
     } catch (_) {
       if (!mounted) return;
       setState(() => _recording = false);
@@ -124,8 +189,13 @@ class _SpeakingScreenState extends State<SpeakingScreen> {
       }
     }
     if (!mounted) return;
-    setState(() => _part = index);
+    _prepTimer?.cancel();
+    setState(() {
+      _part = index;
+      _prepLeft = null;
+    });
     _reset();
+    _maybeAutoPrep();
   }
 
   Future<void> _submit() async {
@@ -140,7 +210,13 @@ class _SpeakingScreenState extends State<SpeakingScreen> {
         parts.add({'number': _parts[i].number, 'prompt': _promptFor(_parts[i]), 'audioUrl': url});
       }
       final res = await api.speakingFeedback(examId: _examId, parts: parts);
-      if (mounted) setState(() => _result = res);
+      if (!mounted) return;
+      if (widget.full) {
+        FullExamStore.record('speaking', res.overall);
+        context.go('/full-exam');
+        return;
+      }
+      setState(() => _result = res);
     } catch (_) {
       if (mounted) showToast(context, 'AI feedback is unavailable right now. Please try again.');
     } finally {
@@ -162,6 +238,10 @@ class _SpeakingScreenState extends State<SpeakingScreen> {
   @override
   void dispose() {
     _timer?.cancel();
+    _prepTimer?.cancel();
+    for (final c in _notes.values) {
+      c.dispose();
+    }
     _rec.dispose();
     super.dispose();
   }
@@ -190,7 +270,10 @@ class _SpeakingScreenState extends State<SpeakingScreen> {
     final part = _parts[_part];
     final hasClip = _clips.containsKey(_part);
     return Scaffold(
-      appBar: AppBar(title: const Text('Speaking practice')),
+      appBar: AppBar(
+        title: Text(_isExam ? 'Speaking test' : 'Speaking practice'),
+        actions: [ModeBadge(_mode), const SizedBox(width: 12)],
+      ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
         children: [
@@ -287,6 +370,31 @@ class _SpeakingScreenState extends State<SpeakingScreen> {
                       padding: const EdgeInsets.only(bottom: 2),
                       child: Text('•  $b', style: const TextStyle(fontSize: 13.5)),
                     )),
+                const SizedBox(height: 8),
+                Text(
+                  _isExam
+                      ? 'You have exactly 1 minute to prepare and may make notes. Then speak for up to 2 minutes — '
+                          "you won't be interrupted, and the recording stops at the time limit."
+                      : 'Take a minute to prepare if you like, then speak for up to 2 minutes.',
+                  style: const TextStyle(fontSize: 12, color: AppColors.mutedForeground),
+                ),
+                if (_prepLeft != null || _isExam || _notesFor(_part).text.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: _notesFor(_part),
+                    maxLines: 3,
+                    decoration: const InputDecoration(hintText: 'Your notes (not graded)…'),
+                  ),
+                ],
+                const SizedBox(height: 8),
+                if (_prepLeft != null)
+                  Row(children: [
+                    PillBadge('Preparation · ${pad2(_prepLeft! ~/ 60)}:${pad2(_prepLeft! % 60)}', color: AppColors.primary),
+                    const Spacer(),
+                    TextButton(onPressed: () => _finishPrep(record: true), child: const Text('Start speaking now')),
+                  ])
+                else if (!_isExam && !hasClip && !_prepDone.contains(_part))
+                  OutlinedButton(onPressed: _startPrep, child: const Text('Start 1-minute preparation (optional)')),
               ]),
             )
           else
@@ -326,10 +434,16 @@ class _SpeakingScreenState extends State<SpeakingScreen> {
                 ),
               ),
               const SizedBox(height: 10),
-              Text('${_recording ? 'Recording…' : hasClip ? 'Recorded' : 'Tap to record'} · ${pad2(_elapsed ~/ 60)}:${pad2(_elapsed % 60)}',
+              Text('${_recording ? 'Recording…' : hasClip ? 'Recorded' : 'Tap to record'} · ${pad2(_elapsed ~/ 60)}:${pad2(_elapsed % 60)} / ${pad2(_cap ~/ 60)}:${pad2(_cap % 60)}',
                   style: const TextStyle(fontWeight: FontWeight.w700)),
-              if (hasClip)
+              if (hasClip && !_isExam)
                 TextButton.icon(onPressed: _reset, icon: const Icon(Icons.refresh_rounded, size: 16), label: const Text('Re-record')),
+              if (hasClip && _isExam && !_recording)
+                const Padding(
+                  padding: EdgeInsets.only(top: 4),
+                  child: Text('Exam conditions: one recording per part.',
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.mutedForeground)),
+                ),
               const Text('Your answer is recorded on this device and uploaded when you submit.',
                   style: TextStyle(fontSize: 11.5, color: AppColors.mutedForeground)),
             ]),
