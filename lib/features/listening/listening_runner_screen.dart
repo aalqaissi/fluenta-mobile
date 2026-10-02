@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../models/models.dart';
+import '../../utils/answer_match.dart' show answeredSlots, questionSlots;
 import '../../services/api_client.dart';
 import '../../services/mock_api.dart';
 import '../../state/auth_state.dart';
@@ -64,8 +65,10 @@ class _ListeningRunnerScreenState extends State<ListeningRunnerScreen> {
   }
 
   ListeningRunSection get _section => exam.sections[_sIdx];
-  int get _totalQ => exam.sections.fold(0, (n, s) => n + s.group.questions.length);
-  int get _answered => _answers.values.where((v) => v.trim().isNotEmpty).length;
+  // Question numbers, not items: a "Choose TWO" counts as two.
+  Iterable<Question> get _questions => exam.sections.expand((s) => s.group.questions);
+  int get _totalQ => _questions.fold(0, (n, q) => n + questionSlots(q.marks));
+  int get _answered => _questions.fold(0, (n, q) => n + answeredSlots(_answers[q.id], q.marks));
 
   String? _resolvedAudioUrl(BuildContext context) {
     final path = _section.audioUrl;

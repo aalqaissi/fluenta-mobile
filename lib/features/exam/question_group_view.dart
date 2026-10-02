@@ -77,9 +77,11 @@ class QuestionGroupView extends StatelessWidget {
 
   Widget _questionCard(BuildContext context, Question q) {
     final val = answers[q.id] ?? '';
-    final correct = review
-        ? answerMatches(val, AnswerKey(q.correct, accepted: q.accepted, wordLimit: q.wordLimit, type: group.type.wireKey))
-        : null;
+    // "Choose TWO/THREE": several letters, worth (and numbered as) that many questions.
+    final pick = (q.marks ?? 1) > 1 ? q.marks! : 1;
+    final key = AnswerKey(q.correct, accepted: q.accepted, wordLimit: q.wordLimit, type: pick > 1 ? multiSelectType : group.type.wireKey);
+    final correct = review ? answerMatches(val, key) : null;
+    final marks = review && pick > 1 ? answerMarks(val, key) : null;
     final borderColor = review
         ? (correct! ? AppColors.success : AppColors.destructive)
         : AppColors.border;
@@ -96,19 +98,26 @@ class QuestionGroupView extends StatelessWidget {
         children: [
           Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Container(
-              width: 24, height: 24,
+              height: 24,
+              constraints: const BoxConstraints(minWidth: 24),
+              padding: const EdgeInsets.symmetric(horizontal: 6),
               decoration: BoxDecoration(
                 color: review ? borderColor : AppColors.primary.withValues(alpha: 0.1),
-                shape: BoxShape.circle,
+                borderRadius: BorderRadius.circular(12),
               ),
               alignment: Alignment.center,
               child: review
                   ? Icon(correct! ? Icons.check : Icons.close, size: 14, color: Colors.white)
-                  : Text('${q.number}', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.primary)),
+                  : Text(pick > 1 ? '${q.number}–${q.number + pick - 1}' : '${q.number}', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.primary)),
             ),
             const SizedBox(width: 10),
             Expanded(child: Text(q.prompt, style: const TextStyle(fontSize: 14, height: 1.4, fontWeight: FontWeight.w500))),
           ]),
+          if (pick > 1)
+            Padding(
+              padding: const EdgeInsets.only(top: 4, left: 34),
+              child: Text('CHOOSE ${pick == 3 ? 'THREE' : 'TWO'} LETTERS', style: const TextStyle(fontSize: 10.5, letterSpacing: 0.3, color: AppColors.mutedForeground, fontWeight: FontWeight.w700)),
+            ),
           if (q.wordLimit != null)
             Padding(
               padding: const EdgeInsets.only(top: 4, left: 34),
@@ -121,7 +130,7 @@ class QuestionGroupView extends StatelessWidget {
           if (review && !(correct ?? true))
             Padding(
               padding: const EdgeInsets.only(top: 8, left: 34),
-              child: Text('Correct answer: ${q.correct}', style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: AppColors.success)),
+              child: Text(pick > 1 ? 'Correct answers: ${answerLetters(q.correct).join(', ')}  (${marks!.earned} of ${marks.total} marks)' : 'Correct answer: ${q.correct}', style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: AppColors.success)),
             ),
         ],
       ),
@@ -136,6 +145,7 @@ class QuestionGroupView extends StatelessWidget {
         children: (group.sharedOptions ?? []).map((o) => _pill(o.text, o.key, val, q.id)).toList(),
       );
     }
+    if (group.type == QuestionType.multipleChoice && (q.marks ?? 1) > 1) return _multiChoice(q, val, q.marks!);
     if (group.type == QuestionType.multipleChoice) {
       return Column(
         children: (q.options ?? []).map((o) {
@@ -199,6 +209,54 @@ class QuestionGroupView extends StatelessWidget {
       );
     }
     return const SizedBox.shrink();
+  }
+
+  /// Checkbox list for "Choose TWO/THREE": at most [max] letters; the answer is the picked letters,
+  /// sorted and comma-separated ("A,C").
+  Widget _multiChoice(Question q, String val, int max) {
+    final picked = answerLetters(val);
+    final full = picked.length >= max;
+    void toggle(String k) {
+      final next = picked.contains(k) ? picked.where((x) => x != k).toList() : (full ? picked : [...picked, k]);
+      onChanged(q.id, (next..sort()).join(','));
+    }
+
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      for (final o in q.options ?? const <QuestionOption>[])
+        Padding(
+          padding: const EdgeInsets.only(bottom: 8),
+          child: Opacity(
+            opacity: full && !picked.contains(o.key) && !review ? 0.5 : 1,
+            child: InkWell(
+              onTap: review || (full && !picked.contains(o.key)) ? null : () => toggle(o.key),
+              borderRadius: BorderRadius.circular(12),
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: picked.contains(o.key) ? AppColors.primary.withValues(alpha: 0.06) : AppColors.surface,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: picked.contains(o.key) ? AppColors.primary : AppColors.border),
+                ),
+                child: Row(children: [
+                  Container(
+                    width: 22, height: 22,
+                    decoration: BoxDecoration(
+                      color: picked.contains(o.key) ? AppColors.primary : Colors.transparent,
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(color: picked.contains(o.key) ? AppColors.primary : AppColors.border),
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(o.key, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: picked.contains(o.key) ? Colors.white : AppColors.mutedForeground)),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(child: Text(o.text, style: const TextStyle(fontSize: 13.5))),
+                ]),
+              ),
+            ),
+          ),
+        ),
+      Text('${picked.length} of $max chosen', style: const TextStyle(fontSize: 12, color: AppColors.mutedForeground)),
+    ]);
   }
 
   Widget _pill(String text, String key, String val, String qid) {

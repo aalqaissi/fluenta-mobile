@@ -641,6 +641,9 @@ class Question {
   /// Extra accepted answers (spelling variants, "(optional)" words) — see utils/answer_match.dart.
   final List<String> accepted;
   final List<QuestionOption>? options; // for multiple choice (per-question)
+  /// Multi-select ("Choose TWO/THREE"): letters to choose — worth, and numbered as, that many
+  /// questions; [correct] then holds the letters as "A,C".
+  final int? marks;
   const Question({
     required this.id,
     required this.number,
@@ -649,6 +652,7 @@ class Question {
     this.wordLimit,
     this.accepted = const [],
     this.options,
+    this.marks,
   });
 }
 

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../models/models.dart';
+import '../../utils/answer_match.dart' show answeredSlots, questionSlots;
 import '../../services/api_client.dart';
 import '../../services/mock_api.dart';
 import '../../state/auth_state.dart';
@@ -73,8 +74,10 @@ class _ReadingRunnerScreenState extends State<ReadingRunnerScreen> {
     super.dispose();
   }
 
-  int get _totalQ => exam.passages.fold(0, (n, p) => n + p.groups.fold(0, (m, g) => m + g.questions.length));
-  int get _answered => _answers.values.where((v) => v.trim().isNotEmpty).length;
+  // Question numbers, not items: a "Choose TWO" counts as two.
+  Iterable<Question> get _questions => exam.passages.expand((p) => p.groups).expand((g) => g.questions);
+  int get _totalQ => _questions.fold(0, (n, q) => n + questionSlots(q.marks));
+  int get _answered => _questions.fold(0, (n, q) => n + answeredSlots(_answers[q.id], q.marks));
 
   Future<void> _submit() async {
     if (_submitting) return;
