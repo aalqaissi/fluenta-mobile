@@ -87,10 +87,57 @@ List<String> _expand(String raw) {
   ];
 }
 
+const multiSelectType = 'multi-select';
+
+/// "a, C" → ['A', 'C']: the distinct single letters of a multi-select answer, in order.
+List<String> answerLetters(String? s) {
+  final out = <String>[];
+  for (final part in (s ?? '').split(RegExp('[^A-Za-z]+'))) {
+    final l = part.toUpperCase();
+    if (l.length == 1 && !out.contains(l)) out.add(l);
+  }
+  return out;
+}
+
+class Marks {
+  final int earned;
+  final int total;
+  const Marks(this.earned, this.total);
+}
+
+/// Marks for one question. Multi-select ("Choose TWO/THREE") is worth one mark per correct letter,
+/// in any order — choosing more letters than asked earns nothing. Every other type is worth 1 mark
+/// when [answerMatches] holds. Pinned by answer-marks-vectors.json (shared with web + backend).
+Marks answerMarks(String? given, AnswerKey key) {
+  if (key.type == multiSelectType) {
+    final correct = answerLetters(key.answer);
+    final picked = answerLetters(given);
+    final total = correct.isEmpty ? 1 : correct.length;
+    if (picked.length > total) return Marks(0, total);
+    return Marks(picked.where(correct.contains).length, total);
+  }
+  return Marks(answerMatches(given, key) ? 1 : 0, 1);
+}
+
 bool answerMatches(String? given, AnswerKey key) {
+  if (key.type == multiSelectType && answerLetters(key.answer).length > 1) {
+    final m = answerMarks(given, key);
+    return m.earned == m.total;
+  }
   final g = normalizeAnswer(given);
   if (g.isEmpty) return false;
   if (_gated(key.type) && !_withinLimit(g, key.wordLimit)) return false;
   final candidates = [key.answer, ...key.accepted].expand(_expand);
   return candidates.any((c) => c.isNotEmpty && c == g);
+}
+
+/// Question numbers a question takes — a "Choose TWO" ([marks] 2) takes 2, everything else 1.
+int questionSlots(int? marks) => marks != null && marks > 1 ? marks : 1;
+
+/// How many of a question's numbers are answered (letters picked, for Choose TWO/THREE).
+int answeredSlots(String? given, int? marks) {
+  if (given == null || given.trim().isEmpty) return 0;
+  if (marks == null || marks <= 1) return 1;
+  final n = answerLetters(given).length;
+  return n < marks ? n : marks;
 }

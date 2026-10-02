@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import '../models/models.dart';
+import '../utils/answer_match.dart' show answerLetters;
 
 /// Picks a random item, avoiding [avoid] whenever there is any other choice.
 /// Students get a random published exam rather than always the first one.
@@ -124,7 +125,8 @@ List<Map<String, String>>? _matchingOptions(String type, Map<String, dynamic> pa
 /// otherwise anything without its own choices becomes a typed answer.
 String _renderKind(String type, {required bool matching}) => switch (type) {
       'true-false-notgiven' || 'yes-no-notgiven' => type,
-      'multiple-choice' || 'multi-select' => 'multiple-choice',
+      'multiple-choice' => 'multiple-choice',
+      'multi-select' => 'multi-select',
       _ when _wordLimitTypes.contains(type) => type,
       _ when matching && (_authoredOptionTypes.contains(type) || _paragraphOptionTypes.contains(type)) => type,
       _ => 'short-answer',
@@ -151,10 +153,17 @@ String? _matchingInstructions(String kind, List<String>? keys) {
   };
 }
 
+/// 2 or 3 letters for a multi-select question: its `choose`, else inferred from its answer.
+int _chooseCount(Object? choose, String answer) {
+  if (choose is num) return choose >= 3 ? 3 : 2;
+  return answerLetters(answer).length >= 3 ? 3 : 2;
+}
+
 String _instructions(String kind) => switch (kind) {
       'true-false-notgiven' => 'Do the following statements agree with the information in the passage? Choose True, False or Not Given.',
       'yes-no-notgiven' => "Do the following statements agree with the writer's views? Choose Yes, No or Not Given.",
       'multiple-choice' => 'Choose the correct letter for each question.',
+      'multi-select' => 'Choose TWO (or THREE) letters for each question, as stated.',
       'short-answer' => 'Answer the questions. Write no more than the stated number of words.',
       'matching-information' => 'Which paragraph contains the following information? Choose the correct letter. You may use any letter more than once.',
       'matching-headings' => 'Choose the correct heading for each paragraph from the list of headings.',
@@ -194,24 +203,29 @@ List<Map<String, dynamic>> _studioGroups(
     }
     final limit = (q['wordLimit'] as num?)?.toInt();
     final options = (q['options'] as List?) ?? const [];
+    final answer = (q['answer'] as String?) ?? '';
+    // "Choose TWO/THREE": one question worth (and numbered as) that many; key = sorted letters "A,C".
+    final marks = kind == 'multi-select' ? _chooseCount(q['choose'], answer) : 1;
     (groups.last['questions'] as List).add({
       'id': q['id'],
-      'number': counter[0]++,
+      'number': counter[0],
       'prompt': (q['prompt'] as String?) ?? '',
-      'correct': (q['answer'] as String?) ?? '',
+      'correct': kind == 'multi-select' ? ([...answerLetters(answer)]..sort()).join(',') : answer,
+      if (marks > 1) 'marks': marks,
       if (limit != null && limit > 0 && _wordLimitTypes.contains(kind)) 'wordLimit': 'Max $limit word${limit == 1 ? '' : 's'}',
       if (_wordLimitTypes.contains(kind) && q['accepted'] is List) 'accepted': q['accepted'],
-      if (kind == 'multiple-choice')
+      if (kind == 'multiple-choice' || kind == 'multi-select')
         'options': [
           for (var i = 0; i < options.length && i < _letters.length; i++)
             {'key': _letters[i], 'text': '${options[i]}'.isEmpty ? 'Option ${_letters[i]}' : '${options[i]}'},
         ],
     });
+    counter[0] += marks;
   }
   for (final g in groups) {
     final qs = g['questions'] as List;
     final first = (qs.first as Map)['number'];
-    final last = (qs.last as Map)['number'];
+    final last = (qs.last as Map)['number'] + (((qs.last as Map)['marks'] as int?) ?? 1) - 1;
     g['rangeLabel'] = first == last ? 'Question $first' : 'Questions $first–$last';
     // Matching groups name their letter range ("…with the correct ending, A–H."), as on the paper.
     final shared = g['sharedOptions'] as List?;
@@ -386,6 +400,7 @@ QuestionGroup _group(Map<String, dynamic> g) => QuestionGroup(
     );
 
 Question _question(Map<String, dynamic> q) => Question(
+      marks: (q['marks'] as num?)?.toInt(),
       id: (q['id'] as String?) ?? '',
       number: (q['number'] as num?)?.toInt() ?? 0,
       prompt: (q['prompt'] as String?) ?? '',

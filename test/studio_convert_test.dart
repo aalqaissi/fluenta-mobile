@@ -131,6 +131,28 @@ void main() {
     });
   });
 
+  test('multi-select "Choose TWO" is one question worth (and numbered as) two', () {
+    final exam = readingExamFromContent(runnerContent(_dto('reading', {
+      'passages': [
+        {
+          'id': 'p1', 'title': 'T', 'text': 'Text.', 'questionType': 'multi-select',
+          'questions': [
+            {'id': 'm1', 'prompt': 'Which TWO?', 'answer': 'c, a', 'choose': 2, 'options': ['o1', 'o2', 'o3', 'o4', 'o5']},
+            {'id': 't1', 'prompt': 'Statement', 'answer': 'TRUE', 'type': 'true-false-notgiven'},
+          ],
+        },
+      ],
+    })));
+    final groups = exam.passages.single.groups;
+    final m = groups.first.questions.single;
+    expect(m.number, 1);
+    expect(m.marks, 2);
+    expect(m.correct, 'A,C');
+    expect(m.options!.length, 5);
+    expect(groups.first.rangeLabel, 'Questions 1–2');
+    expect(groups.last.questions.single.number, 3); // numbering continues after the two
+  });
+
   test('runner-format content passes through untouched', () {
     final content = {'id': 'r', 'title': 'R', 'passages': []};
     expect(runnerContent(_dto('reading', content, format: 'runner')), same(content));
