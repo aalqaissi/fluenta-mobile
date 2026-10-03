@@ -153,6 +153,24 @@ void main() {
     expect(groups.last.questions.single.number, 3); // numbering continues after the two
   });
 
+  test('matching headings are labelled i, ii, iii (stored keys stay letters)', () {
+    expect(optionLabel(QuestionType.matchingHeadings, 'A'), 'i');
+    expect(optionLabel(QuestionType.matchingHeadings, 'D'), 'iv');
+    expect(optionLabel(QuestionType.matchingHeadings, 'ii'), 'ii'); // built-in keys already numerals
+    expect(optionLabel(QuestionType.matchingFeatures, 'C'), 'C');
+    final g = readingExamFromContent(runnerContent(_dto('reading', {
+      'passages': [
+        {
+          'id': 'p1', 'title': 'T', 'text': 'A\nOne.\nB\nTwo.', 'questionType': 'matching-headings',
+          'options': ['h1', 'h2', 'h3'],
+          'questions': [{'id': 'q1', 'prompt': 'Paragraph B', 'answer': 'C'}],
+        },
+      ],
+    }))).passages.single.groups.single;
+    expect(g.instructions, 'Choose the correct heading for each paragraph from the list of headings (i–iii).');
+    expect(g.questions.single.correct, 'C');
+  });
+
   test('runner-format content passes through untouched', () {
     final content = {'id': 'r', 'title': 'R', 'passages': []};
     expect(runnerContent(_dto('reading', content, format: 'runner')), same(content));
