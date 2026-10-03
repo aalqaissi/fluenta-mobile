@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../models/models.dart';
-import '../../services/exam_convert.dart' show optionListTitle;
+import '../../services/exam_convert.dart' show optionLabel, optionListTitle;
 import '../../theme/app_colors.dart';
 import '../../utils/answer_match.dart';
 
@@ -62,7 +62,7 @@ class QuestionGroupView extends StatelessWidget {
                     padding: const EdgeInsets.only(bottom: 4),
                     child: RichText(
                       text: TextSpan(style: const TextStyle(color: AppColors.foreground, fontSize: 13.5), children: [
-                        TextSpan(text: '${o.key}  ', style: const TextStyle(fontWeight: FontWeight.w800, color: AppColors.primary)),
+                        TextSpan(text: '${optionLabel(group.type, o.key)}  ', style: const TextStyle(fontWeight: FontWeight.w800, color: AppColors.primary)),
                         TextSpan(text: o.text),
                       ]),
                     ),
@@ -130,7 +130,7 @@ class QuestionGroupView extends StatelessWidget {
           if (review && !(correct ?? true))
             Padding(
               padding: const EdgeInsets.only(top: 8, left: 34),
-              child: Text(pick > 1 ? 'Correct answers: ${answerLetters(q.correct).join(', ')}  (${marks!.earned} of ${marks.total} marks)' : 'Correct answer: ${q.correct}', style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: AppColors.success)),
+              child: Text(pick > 1 ? 'Correct answers: ${answerLetters(q.correct).join(', ')}  (${marks!.earned} of ${marks.total} marks)' : 'Correct answer: ${optionLabel(group.type, q.correct)}', style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: AppColors.success)),
             ),
         ],
       ),
@@ -191,7 +191,7 @@ class QuestionGroupView extends StatelessWidget {
           decoration: const InputDecoration(hintText: 'Choose…', contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10)),
           items: (group.sharedOptions ?? []).map((o) {
             final t = o.text.length > 34 ? '${o.text.substring(0, 34)}…' : o.text;
-            return DropdownMenuItem(value: o.key, child: Text(t.isEmpty ? o.key : '${o.key} — $t', overflow: TextOverflow.ellipsis));
+            return DropdownMenuItem(value: o.key, child: Text(t.isEmpty ? optionLabel(group.type, o.key) : '${optionLabel(group.type, o.key)} — $t', overflow: TextOverflow.ellipsis));
           }).toList(),
           onChanged: review ? null : (v) => onChanged(q.id, v ?? ''),
         ),

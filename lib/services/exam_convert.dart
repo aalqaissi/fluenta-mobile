@@ -132,6 +132,28 @@ String _renderKind(String type, {required bool matching}) => switch (type) {
       _ => 'short-answer',
     };
 
+/// 1 → "i", 4 → "iv", 12 → "xii" (lower case, as on the IELTS paper).
+String toRoman(int n) {
+  const table = [(10, 'x'), (9, 'ix'), (5, 'v'), (4, 'iv'), (1, 'i')];
+  final out = StringBuffer();
+  for (final (v, s) in table) {
+    while (n >= v) {
+      out.write(s);
+      n -= v;
+    }
+  }
+  return out.toString();
+}
+
+/// How a list key is shown: Matching Headings are numbered i, ii, iii… (paragraphs already use
+/// letters). Only a stored capital letter is translated — keys already written as numerals ("i",
+/// "ii" in built-in exams) are shown as they are. Mirrors the web `optionLabel`.
+String optionLabel(QuestionType type, String key) {
+  final k = key.trim();
+  if (type != QuestionType.matchingHeadings || !RegExp(r'^[A-Z]$').hasMatch(k)) return key;
+  return toRoman(k.codeUnitAt(0) - 64);
+}
+
 /// Title of the lettered list a matching type chooses from, as on the IELTS paper.
 String optionListTitle(QuestionType type) => switch (type) {
       QuestionType.matchingSentenceEndings => 'Sentence endings',
@@ -229,7 +251,9 @@ List<Map<String, dynamic>> _studioGroups(
     g['rangeLabel'] = first == last ? 'Question $first' : 'Questions $first–$last';
     // Matching groups name their letter range ("…with the correct ending, A–H."), as on the paper.
     final shared = g['sharedOptions'] as List?;
-    final ranged = _matchingInstructions('${g['type']}', shared == null ? null : [for (final o in shared) '${(o as Map)['key']}']);
+    final groupType = questionTypeFromKey('${g['type']}');
+    final ranged = _matchingInstructions('${g['type']}',
+        shared == null ? null : [for (final o in shared) optionLabel(groupType, '${(o as Map)['key']}')]);
     if (ranged != null) g['instructions'] = ranged;
   }
   return groups;
