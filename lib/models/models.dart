@@ -682,6 +682,8 @@ class Passage {
   final List<String> paragraphs;
   /// IELTS paragraph letters ("A", "B", …) aligned with [paragraphs], when labelled.
   final List<String>? paragraphLabels;
+  /// Diagram / map / process image shown with the passage (`/media/…` or an absolute URL).
+  final String? imageUrl;
   final List<QuestionGroup> groups;
   const Passage({
     required this.id,
@@ -691,6 +693,7 @@ class Passage {
     required this.totalPassages,
     required this.paragraphs,
     this.paragraphLabels,
+    this.imageUrl,
     required this.groups,
   });
 }

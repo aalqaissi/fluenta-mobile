@@ -171,6 +171,17 @@ void main() {
     expect(g.questions.single.correct, 'C');
   });
 
+  test('the passage diagram image reaches the runner passage', () {
+    final p = readingExamFromContent(runnerContent(_dto('reading', {
+      'passages': [
+        {'id': 'p1', 'title': 'T', 'text': 'Text.', 'questionType': 'diagram-label', 'imageUrl': '/media/d.png', 'questions': []},
+        {'id': 'p2', 'title': 'U', 'text': 'Text.', 'questionType': 'short-answer', 'questions': []},
+      ],
+    }))).passages;
+    expect(p[0].imageUrl, '/media/d.png');
+    expect(p[1].imageUrl, isNull);
+  });
+
   test('runner-format content passes through untouched', () {
     final content = {'id': 'r', 'title': 'R', 'passages': []};
     expect(runnerContent(_dto('reading', content, format: 'runner')), same(content));

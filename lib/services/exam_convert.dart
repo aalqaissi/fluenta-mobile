@@ -278,6 +278,7 @@ Map<String, dynamic> _studioReading(ExamDto e) {
       'passageNumber': i + 1,
       'totalPassages': passages.length,
       'paragraphs': parsed.paragraphs,
+      if (p['imageUrl'] is String && (p['imageUrl'] as String).isNotEmpty) 'imageUrl': p['imageUrl'],
       if (parsed.labels != null || asksParagraph) 'paragraphLabels': parsed.labels ?? _paragraphKeys(parsed),
       'groups': groups,
     });
@@ -392,6 +393,7 @@ Passage _passage(Map<String, dynamic> p) => Passage(
       paragraphs:
           ((p['paragraphs'] as List?) ?? []).map((e) => '$e').toList(),
       paragraphLabels: (p['paragraphLabels'] as List?)?.map((e) => '$e').toList(),
+      imageUrl: p['imageUrl'] as String?,
       groups: ((p['groups'] as List?) ?? [])
           .map((g) => _group(Map<String, dynamic>.from(g as Map)))
           .toList(),
