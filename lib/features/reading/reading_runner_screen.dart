@@ -204,11 +204,27 @@ class _ReadingRunnerScreenState extends State<ReadingRunnerScreen> {
         const SizedBox(height: 12),
         Text(passage.headline, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, height: 1.25)),
         const SizedBox(height: 12),
+        if (passage.imageUrl != null) ...[
+          // Diagram / map / process image from the Content Studio, shown with the passage.
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: Image.network(
+              _resolveMedia(passage.imageUrl!),
+              fit: BoxFit.contain,
+              errorBuilder: (_, _, _) => const SizedBox.shrink(),
+            ),
+          ),
+          const SizedBox(height: 12),
+        ],
         ..._buildParagraphs(passage),
         const SizedBox(height: 8),
       ],
     );
   }
+
+  /// A stored `/media/…` path against the configured server (same rule as listening audio).
+  String _resolveMedia(String path) =>
+      path.startsWith('http') ? path : '${context.read<AuthState>().api.config.mediaBase}$path';
 
   List<Widget> _buildParagraphs(Passage passage) {
     for (final r in _recognizers) {
